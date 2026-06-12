@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<title>Cursor Dinâmico</title>
+<style>
+    body {
+        margin: 0;
+        height: 100vh;
+        background: #222;
+        cursor: none; /* Esconde o cursor padrão */
+    }
+    .custom-cursor {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 32px;
+        height: 32px;
+        background: url('sabreluz (1).png') no-repeat center/contain;
+        pointer-events: none; /* Não interfere nos cliques */
+        transform: translate(-50%, -50%);
+        z-index: 9999;
+    }
+</style>
+</head>
+<body>
+    <div class="custom-cursor"></div>
+
+    <script>
+        const cursor = document.querySelector('.custom-cursor');
+
+        // Atualiza a posição do cursor conforme o mouse se move
+        document.addEventListener('mousemove', (e) => {
+            cursor.style.left = e.clientX + 'px';
+            cursor.style.top = e.clientY + 'px';
+        });
+    </script>
+</body>
+</html>

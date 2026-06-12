@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Cursor com cores</title>
+</head>
+
+<body>
+<input type="button">
+<h1>Clique com o botão direito</h1>
+
+<script>
+
+let cores = [
+    "sabreluz (1).png",
+    "sabreluzazul.png"
+];
+
+let atual = 0;
+
+document.addEventListener("click", function(event) {
+
+    // impede o menu do botão direito aparecer
+    event.preventDefault();
+
+    // troca o cursor
+        document.documentElement.style.cursor =         
+        "url('caboluz.png'), auto";
+        document.documentElement.style.pointer =         
+        "url('sabreluzligado.png'), auto";
+
+    // vai para a próxima cor
+    atual++;
+
+    if (atual >= cores.length) {
+        atual = 0;
+    }
+
+});
+
+</script>
+<script>
+
+    let cursorNormal = "url('caboluz.png') 16 16, auto";
+    let cursorPointer = "url('sabreluzligado.png') 16 16, auto";
+    
+    document.querySelectorAll("a, button, input, [onclick]").forEach(elemento => {
+    
+        elemento.addEventListener("mouseenter", () => {
+            document.body.style.cursor = cursorPointer;
+            elemento.style.cursor = cursorPointer;
+        });
+    
+        elemento.addEventListener("mouseleave", () => {
+            document.documentElement.style.cursor = cursorNormal;
+        });
+    
+    });
+    
+    </script>
+</body>
+</html>
