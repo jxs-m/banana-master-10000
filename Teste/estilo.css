@@ -1,0 +1,176 @@
+:root {
+    --neon-blue: #00f3ff;
+    --neon-red: #ff0000;
+    --dark-bg: #050505;
+    --panel-grey: #1a1a1a;
+}
+
+body {
+    margin: 0;
+    padding: 0;
+    background-color: var(--dark-bg);
+    color: white;
+    font-family: 'Orbitron', sans-serif;
+    overflow-x: hidden;
+    height: 100vh;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    user-select: none;
+}
+
+.stars {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 200%;
+    height: 200%;
+    background: radial-gradient(white 1px, transparent 1px),
+                radial-gradient(white 1px, transparent 1px);
+    background-size: 50px 50px, 100px 100px;
+    background-position: 0 0, 25px 25px;
+    opacity: 0.3;
+    z-index: -1;
+    animation: spaceMove 60s linear infinite;
+}
+
+@keyframes spaceMove {
+    from { background-position: 0 0, 25px 25px; }
+    to { background-position: 1000px 1000px, 1025px 1025px; }
+}
+
+.container {
+    text-align: center;
+    z-index: 10;
+    width: 90%;
+    max-width: 600px;
+    border: 2px solid var(--neon-blue);
+    padding: 40px;
+    background: rgba(0, 20, 40, 0.85);
+    box-shadow: 0 0 20px var(--neon-blue);
+    border-radius: 10px;
+    position: relative;
+}
+
+h1 {
+    font-family: 'Pathway Gothic One', sans-serif;
+    font-size: 2.5rem;
+    color: var(--neon-blue);
+    text-shadow: 0 0 10px var(--neon-blue);
+    margin-bottom: 10px;
+}
+
+p {
+    font-size: 1.2rem;
+    color: #ccc;
+    margin-bottom: 30px;
+}
+
+.btn-group {
+    display: flex;
+    justify-content: center;
+    gap: 30px;
+    margin-top: 20px;
+}
+
+.btn {
+    padding: 15px 30px;
+    font-family: 'Orbitron', sans-serif;
+    font-size: 1.2rem;
+    font-weight: bold;
+    border: none;
+    cursor: pointer;
+    text-transform: uppercase;
+    border-radius: 5px;
+}
+
+#yesBtn {
+    background-color: var(--neon-blue);
+    color: #000;
+    box-shadow: 0 0 15px var(--neon-blue);
+}
+
+#yesBtn:hover {
+    background-color: white;
+    box-shadow: 0 0 25px white;
+    transform: scale(1.1);
+}
+
+#noBtn {
+    background-color: var(--panel-grey);
+    color: var(--neon-red);
+    border: 2px solid var(--neon-red);
+    position: relative;
+    z-index: 1000;
+    transition: top 0.6s ease-out, left 0.6s ease-out;
+}
+
+#noBtn:hover {
+    background-color: var(--neon-red);
+    color: white;
+}
+
+.modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0,0,0,0.95);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    flex-direction: column;
+    z-index: 100;
+    visibility: hidden;
+    opacity: 0;
+    transition: opacity 0.3s;
+}
+
+.modal-overlay.active {
+    visibility: visible;
+    opacity: 1;
+}
+
+.game-title {
+    color: var(--neon-red);
+    font-size: 2rem;
+    margin-bottom: 20px;
+    text-align: center;
+}
+
+.game-area {
+    width: 80%;
+    max-width: 500px;
+    height: 300px;
+    border: 2px dashed var(--neon-red);
+    position: relative;
+    overflow: hidden;
+    cursor: crosshair;
+    background: rgba(0,0,0,0.5);
+}
+
+.target {
+    width: 50px;
+    height: 50px;
+    background: url('https://img.icons8.com/color/48/000000tie-fighter.png') no-repeat center center;
+    background-size: contain;
+    position: absolute;
+    cursor: pointer;
+    transition: top 0.2s, left 0.2s;
+}
+
+.game-btn {
+    margin-top: 20px;
+    padding: 10px 20px;
+    background: var(--panel-grey);
+    color: white;
+    border: 1px solid white;
+    cursor: pointer;
+    font-family: 'Orbitron', sans-serif;
+}
+
+.game-btn:hover {
+    background: white;
+    color: black;
+}

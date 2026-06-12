@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Entrada na Base Rebelde</title>
+    <link rel="stylesheet" href="estilo.css">
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&family=Pathway+Gothic+One&display=swap" rel="stylesheet">
+</head>
+<body>
+
+    <div class="stars"></div>
+
+    <div class="container" id="container">
+        <h1>ACESSO RESTRITO</h1>
+        <p>Você foi detectado por stormtroopers. Deseja ingressar na Aliança Rebelde?</p>
+        
+        <div class="btn-group">
+            <button id="yesBtn" class="btn" onclick="finishGame(true)">SIM</button>
+            <button id="noBtn" class="btn" onclick="onNoClicked()">NÃO</button>
+        </div>
+    </div>
+
+    <div id="successScreen" class="modal-overlay" style="background: var(--neon-blue);">
+        <h1>BEM-VINDO, REBELDE!</h1>
+        <p>Seu acesso foi liberado.</p>
+        <p>Que a Força esteja com você.</p>
+        <button class="game-btn" onclick="location.reload()">Reiniciar</button>
+    </div>
+
+    <div id="game1" class="modal-overlay">
+        <div class="game-title">ALERTA: CAÇA TIE INCOMING!</div>
+        <div class="game-area" id="gameArea1">
+            <div class="target" id="target1" style="top: 50%; left: 50%;"></div>
+        </div>
+        <p>Derrote 5 Tie Fighters para escapar!</p>
+        <p id="score1">Inimigos restantes: 5</p>
+        <button class="game-btn" onclick="returnToMain()">Desistir</button>
+    </div>
+
+    <div id="game2" class="modal-overlay">
+        <div class="game-title" style="color: var(--neon-blue);">O IMPÉRIO TE ENCONTROU!</div>
+        <h2 style="color: lime; margin: 20px;">"Você não escapará facilmente."</h2>
+        <p>PRESSIONE O BOTÃO 10 VEZES PARA RESISTIR!</p>
+        <p id="counter2">Força restante: 10</p>
+        <button class="game-btn" onclick="surviveGame()" id="resistBtn">AGUENTAR</button>
+    </div>
+
+    <div id="messageOverlay" class="modal-overlay" style="background: rgba(20, 0, 0, 0.95);">
+        <h2 id="messageText" style="color: var(--neon-red); font-size: 1.5rem;"></h2>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>
