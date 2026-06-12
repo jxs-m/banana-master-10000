@@ -1,0 +1,1633 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Star Wars: Fuga dos Asteroides - Fase 1</title>
+    <meta name="description" content="Fase 1: Minigame de desvio no espaço com visão de cima. Desvie dos asteroides e lasers do NÃO!">
+    
+    <!-- Google Fonts para estilo Sci-Fi Premium e Retro Arcade -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Press+Start+2P&display=swap" rel="stylesheet">
+
+    <!-- CSS EMBUTIDO PARA FÁCIL INTEGRAÇÃO NO ARQUIVO ÚNICO FINAL -->
+    <style>
+        /* ==========================================================================
+           VARIÁVEIS DE DESIGN E TEMATIZAÇÃO (ESTILO STAR WARS)
+           ========================================================================== */
+        :root {
+            --bg-dark: #020205;
+            --space-blue: #080b1e;
+            --rebel-orange: #ff5e00;
+            --imperial-red: #ff1e56;
+            --laser-green: #39ff14;
+            --hyper-blue: #00e5ff;
+            --starwars-yellow: #ffe81f;
+            --glass-bg: rgba(10, 15, 30, 0.75);
+            --glass-border: rgba(0, 229, 255, 0.2);
+            --font-sci-fi: 'Orbitron', sans-serif;
+            --font-retro: 'Press Start 2P', monospace;
+            --neon-shadow-blue: 0 0 10px rgba(0, 229, 255, 0.5), 0 0 20px rgba(0, 229, 255, 0.2);
+            --neon-shadow-red: 0 0 10px rgba(255, 30, 86, 0.5), 0 0 20px rgba(255, 30, 86, 0.2);
+            --neon-shadow-green: 0 0 10px rgba(57, 255, 20, 0.5), 0 0 20px rgba(57, 255, 20, 0.2);
+        }
+
+        /* Resets Globais */
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            user-select: none;
+            -webkit-user-select: none;
+        }
+
+        body {
+            background-color: var(--bg-dark);
+            color: #ffffff;
+            font-family: var(--font-sci-fi);
+            overflow: hidden;
+            height: 100vh;
+            width: 100vw;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        /* Wrapper principal para centralizar e ajustar escala */
+        #app-wrapper {
+            position: relative;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            width: 100%;
+            height: 100%;
+            background: radial-gradient(circle at center, var(--space-blue) 0%, var(--bg-dark) 100%);
+        }
+
+        /* CONTAINER PRINCIPAL DO JOGO (Tamanho fixado 480x640 idêntico às outras fases) */
+        #game-container {
+            position: relative;
+            width: 480px;
+            height: 640px;
+            background-color: rgba(4, 4, 10, 0.96);
+            border: 3px solid var(--hyper-blue);
+            border-radius: 16px;
+            box-shadow: 0 0 25px rgba(0, 229, 255, 0.35), inset 0 0 15px rgba(0, 229, 255, 0.1);
+            overflow: hidden;
+            z-index: 10;
+            max-width: 100vw;
+            max-height: 100vh;
+        }
+
+        /* Responsividade Automática por Escala CSS */
+        @media (max-width: 500px), (max-height: 660px) {
+            #game-container {
+                transform: scale(0.8);
+            }
+        }
+        @media (max-width: 400px), (max-height: 530px) {
+            #game-container {
+                transform: scale(0.65);
+            }
+        }
+
+        #game-canvas {
+            display: block;
+            width: 100%;
+            height: 100%;
+            background-color: transparent;
+        }
+
+        /* Estilos de Textos e Brilhos Neon */
+        .neon-text-blue {
+            color: var(--hyper-blue);
+            text-shadow: var(--neon-shadow-blue);
+        }
+        .neon-text-red {
+            color: var(--imperial-red);
+            text-shadow: var(--neon-shadow-red);
+            font-family: var(--font-retro);
+            font-size: 18px;
+            line-height: 1.5;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+        .neon-text-green {
+            color: var(--laser-green);
+            text-shadow: var(--neon-shadow-green);
+            font-family: var(--font-retro);
+            font-size: 20px;
+            margin-bottom: 15px;
+            text-align: center;
+            animation: pulse 1.5s infinite;
+        }
+
+        @keyframes pulse {
+            0% { transform: scale(1); opacity: 1; }
+            50% { transform: scale(1.03); opacity: 0.8; }
+            100% { transform: scale(1); opacity: 1; }
+        }
+
+        /* ==========================================================================
+           INTERFACES / OVERLAYS DO CANVAS
+           ========================================================================== */
+        .overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(2, 2, 5, 0.9);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            z-index: 20;
+            padding: 30px;
+            box-sizing: border-box;
+            transition: opacity 0.4s ease, visibility 0.4s ease;
+            text-align: center;
+        }
+
+        .overlay.hidden {
+            opacity: 0;
+            visibility: hidden;
+            pointer-events: none;
+        }
+
+        /* TELA DE INTRODUÇÃO / MENU */
+        .intro-title {
+            color: var(--starwars-yellow);
+            font-size: 32px;
+            font-weight: 900;
+            letter-spacing: 4px;
+            margin-bottom: 5px;
+            text-shadow: 0 0 10px rgba(255, 232, 31, 0.5);
+        }
+        
+        .intro-subtitle {
+            color: var(--rebel-orange);
+            font-size: 15px;
+            font-family: var(--font-retro);
+            letter-spacing: 2px;
+            margin-bottom: 30px;
+            text-shadow: 0 0 8px rgba(255, 94, 0, 0.4);
+        }
+
+        .intro-description {
+            font-size: 13px;
+            line-height: 1.6;
+            color: rgba(255, 255, 255, 0.8);
+            margin-bottom: 35px;
+            max-width: 90%;
+            text-align: justify;
+        }
+
+        .tip-text {
+            font-size: 10px;
+            color: rgba(255, 255, 255, 0.5);
+            margin-top: 25px;
+        }
+
+        /* HUD DO JOGO (HEADS UP DISPLAY) */
+        #game-hud {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            padding: 15px 20px;
+            z-index: 15;
+            background: linear-gradient(to bottom, rgba(5, 10, 25, 0.95) 0%, rgba(5, 10, 25, 0) 100%);
+            pointer-events: none; /* Não bloqueia cliques no canvas */
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        #game-hud.hidden {
+            display: none !important;
+        }
+
+        .hud-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            width: 100%;
+        }
+
+        .hud-panel {
+            display: flex;
+            align-items: center;
+            background: var(--glass-bg);
+            border: 1px solid var(--glass-border);
+            border-radius: 8px;
+            padding: 6px 12px;
+            backdrop-filter: blur(4px);
+        }
+
+        .hud-label {
+            font-size: 7px;
+            font-family: var(--font-retro);
+            color: rgba(255, 255, 255, 0.6);
+            margin-right: 8px;
+        }
+
+        .hud-value {
+            font-size: 12px;
+            font-family: var(--font-retro);
+            color: var(--hyper-blue);
+            text-shadow: var(--neon-shadow-blue);
+        }
+
+        .time-display .hud-value {
+            color: var(--starwars-yellow);
+            text-shadow: 0 0 8px rgba(255, 232, 31, 0.4);
+        }
+
+        .lives-display {
+            display: flex;
+            gap: 4px;
+            align-items: center;
+        }
+
+        .life-heart {
+            color: var(--imperial-red);
+            font-size: 16px;
+            filter: drop-shadow(0 0 4px var(--imperial-red));
+            transition: transform 0.2s ease;
+        }
+
+        .life-heart.lost {
+            transform: scale(0);
+            opacity: 0.2;
+            color: #555;
+            filter: none;
+        }
+
+        /* Barra de progresso para a dobra do hiperespaço */
+        .progress-container {
+            width: 100%;
+            height: 6px;
+            background-color: rgba(255, 255, 255, 0.1);
+            border-radius: 3px;
+            overflow: hidden;
+            border: 1px solid rgba(255, 255, 255, 0.05);
+        }
+
+        .progress-bar {
+            width: 0%;
+            height: 100%;
+            background: linear-gradient(to right, var(--rebel-orange), var(--hyper-blue));
+            box-shadow: 0 0 8px var(--hyper-blue);
+            transition: width 0.2s linear;
+        }
+
+        /* TELA DE GAME OVER & VITÓRIA */
+        .final-score-text {
+            font-size: 15px;
+            margin-bottom: 30px;
+            font-family: var(--font-retro);
+            line-height: 1.8;
+        }
+
+        .victory-description {
+            font-size: 13px;
+            color: rgba(255, 255, 255, 0.85);
+            margin-bottom: 25px;
+            max-width: 90%;
+            line-height: 1.6;
+        }
+
+        .warp-countdown {
+            font-family: var(--font-retro);
+            font-size: 9px;
+            color: var(--hyper-blue);
+            text-shadow: var(--neon-shadow-blue);
+            margin-top: 25px;
+            animation: heartbeat 1s infinite;
+        }
+
+        /* BOTÕES SCI-FI */
+        .sci-fi-btn {
+            font-family: var(--font-sci-fi);
+            font-weight: 700;
+            letter-spacing: 2px;
+            padding: 12px 30px;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: all 0.25s ease;
+            outline: none;
+            text-transform: uppercase;
+            font-size: 13px;
+        }
+
+        .main-btn {
+            background-color: var(--rebel-orange);
+            color: #ffffff;
+            border: 1px solid #ff9d00;
+            box-shadow: 0 0 12px rgba(255, 94, 0, 0.45);
+        }
+
+        .main-btn:hover {
+            background-color: #ff7700;
+            box-shadow: 0 0 20px rgba(255, 94, 0, 0.7);
+            transform: translateY(-2px);
+        }
+
+        .main-btn:active {
+            transform: translateY(0);
+        }
+
+        .start-btn-yellow {
+            background-color: var(--starwars-yellow);
+            color: #000000;
+            border: 1px solid #fffb00;
+            box-shadow: 0 0 15px rgba(255, 232, 31, 0.5);
+            font-weight: 900;
+            width: 80%;
+        }
+
+        .start-btn-yellow:hover {
+            background-color: #ffea00;
+            box-shadow: 0 0 25px rgba(255, 232, 31, 0.85);
+            transform: translateY(-2px);
+        }
+    </style>
+</head>
+<body>
+
+    <div id="app-wrapper">
+        <!-- CONTAINER DO CANVAS -->
+        <div id="game-container">
+            
+            <canvas id="game-canvas" width="480" height="640"></canvas>
+
+            <!-- HUD (DADOS DE PONTUAÇÃO E SANGUE DURANTE O JOGO) -->
+            <div id="game-hud" class="hidden">
+                <div class="hud-row">
+                    <!-- Timer Sobrevivência -->
+                    <div class="hud-panel time-display">
+                        <span class="hud-label">ESCUDO MOTOR:</span>
+                        <span id="time-left" class="hud-value">30s</span>
+                    </div>
+
+                    <!-- Vidas restantes -->
+                    <div class="hud-panel">
+                        <span class="hud-label" style="margin-right:12px;">INTEGRIDADE:</span>
+                        <div class="lives-display">
+                            <span id="heart-1" class="life-heart">❤️</span>
+                            <span id="heart-2" class="life-heart">❤️</span>
+                            <span id="heart-3" class="life-heart">❤️</span>
+                        </div>
+                    </div>
+                </div>
+                <!-- Barra de progresso para salto em hiperespaço -->
+                <div class="progress-container">
+                    <div id="progress-bar" class="progress-bar"></div>
+                </div>
+            </div>
+
+            <!-- TELA 1: INTRODUÇÃO / MENU -->
+            <div id="start-screen" class="overlay">
+                <div class="intro-title">EPISÓDIO I</div>
+                <div class="intro-subtitle">A FUGA DOS ASTEROIDES</div>
+                
+                <p class="intro-description">
+                    stormtroopers imperiais sabotaram seu motor e lançaram um cinturão de asteroides no seu caminho. 
+                    O botão NÃO está no topo zombando da sua situação e disparando lasers mortais!
+                    Pilote a Millennium Falcon, desvie dos pedregulhos e projéteis e sobreviva por 30 segundos até acumular energia suficiente para o salto espacial.
+                </p>
+
+                <button id="play-btn" class="sci-fi-btn start-btn-yellow">INICIAR MISSÃO (ESPAÇO)</button>
+                <p class="tip-text">Comandos: Use as setas do teclado ou W, A, S, D para se mover livremente.</p>
+            </div>
+
+            <!-- TELA 2: GAME OVER -->
+            <div id="game-over-screen" class="overlay hidden">
+                <h2 class="neon-text-red">NAVE DESTRUÍDA!</h2>
+                <div class="final-score-text">
+                    A integridade do casco falhou.<br>
+                    Tempo de sobrevivência: <span id="final-time" class="neon-text-blue">0.0s</span>
+                </div>
+                
+                <button id="restart-btn" class="sci-fi-btn main-btn">TENTAR NOVAMENTE (ENTER)</button>
+                <p class="tip-text">Tente manter o movimento circular para escapar dos disparos e asteroides.</p>
+            </div>
+
+            <!-- TELA 3: VITÓRIA -->
+            <div id="victory-screen" class="overlay hidden">
+                <h2 class="neon-text-green">HIPERESPAÇO ATIVADO!</h2>
+                <div class="victory-description">
+                    Você resistiu aos asteroides e defesas! O botão NÃO acionou seu hiperespaço para fugir para um planeta distante.
+                    Os computadores de bordo traçaram a rota e estamos saltando logo atrás dele!
+                </div>
+                
+                <div class="warp-countdown">
+                    Saltando em <span id="countdown-timer">3</span>s...
+                </div>
+
+                <button id="next-btn" class="sci-fi-btn main-btn" style="background-color: var(--laser-green); border-color: #39ff14; box-shadow: 0 0 15px rgba(57,255,20,0.4);">IR PARA O PLANETA</button>
+            </div>
+
+        </div>
+    </div>
+
+    <!-- JAVASCRIPT: LOGICA COMPLETA E ORGANIZADA POR CLASSES -->
+    <script>
+        /* ==========================================================================
+           1. ARQUIVOS DE SPRITES (VARIÁVEIS DE CONFIGURAÇÃO DO DESIGNER)
+           Imagens externas armazenadas em ./assets/ com caminhos relativos.
+           Caso não carreguem, o canvas desenhará fallbacks geométricos detalhados.
+           ========================================================================== */
+        const imgPlayer = new Image();
+        imgPlayer.src = './assets/nave.png';
+
+        const imgNoButton = new Image();
+        imgNoButton.src = './assets/no_button.png';
+
+        const imgAsteroid = new Image();
+        imgAsteroid.src = './assets/asteroide.png';
+
+
+        /* ==========================================================================
+           2. CLASSE: SoundSynth (SINTETIZADOR DE ÁUDIO WEB AUDIO API)
+           Sintetiza disparos de laser, motores e explosões em tempo real.
+           ========================================================================== */
+        class SoundSynth {
+            constructor() {
+                this.ctx = null;
+                this.volume = 0.45;
+            }
+
+            init() {
+                if (!this.ctx) {
+                    this.ctx = new (window.AudioContext || window.webkitAudioContext)();
+                }
+                if (this.ctx.state === 'suspended') {
+                    this.ctx.resume();
+                }
+            }
+
+            // Som curto do motor (quando nave acelera)
+            playEngine() {
+                this.init();
+                if (!this.ctx) return;
+                try {
+                    const now = this.ctx.currentTime;
+                    const osc = this.ctx.createOscillator();
+                    const gain = this.ctx.createGain();
+                    
+                    osc.connect(gain);
+                    gain.connect(this.ctx.destination);
+                    
+                    osc.type = 'sawtooth';
+                    osc.frequency.setValueAtTime(80, now);
+                    osc.frequency.linearRampToValueAtTime(40, now + 0.1);
+                    
+                    gain.gain.setValueAtTime(this.volume * 0.12, now);
+                    gain.gain.linearRampToValueAtTime(0.01, now + 0.1);
+                    
+                    osc.start(now);
+                    osc.stop(now + 0.1);
+                } catch(e) {}
+            }
+
+            // Disparo laser do botão NÃO (Pew!)
+            playLaser() {
+                this.init();
+                if (!this.ctx) return;
+                try {
+                    const now = this.ctx.currentTime;
+                    const osc = this.ctx.createOscillator();
+                    const gain = this.ctx.createGain();
+                    
+                    osc.connect(gain);
+                    gain.connect(this.ctx.destination);
+                    
+                    osc.type = 'sawtooth';
+                    osc.frequency.setValueAtTime(900, now);
+                    osc.frequency.exponentialRampToValueAtTime(120, now + 0.15);
+                    
+                    gain.gain.setValueAtTime(this.volume * 0.1, now);
+                    gain.gain.linearRampToValueAtTime(0.01, now + 0.15);
+                    
+                    osc.start(now);
+                    osc.stop(now + 0.15);
+                } catch(e) {}
+            }
+
+            // Som de dano sofrido (Buzzer metálico de colisão)
+            playDamage() {
+                this.init();
+                if (!this.ctx) return;
+                try {
+                    const now = this.ctx.currentTime;
+                    const osc = this.ctx.createOscillator();
+                    const gain = this.ctx.createGain();
+                    
+                    osc.connect(gain);
+                    gain.connect(this.ctx.destination);
+                    
+                    osc.type = 'triangle';
+                    osc.frequency.setValueAtTime(180, now);
+                    osc.frequency.setValueAtTime(90, now + 0.08);
+                    
+                    gain.gain.setValueAtTime(this.volume * 0.35, now);
+                    gain.gain.linearRampToValueAtTime(0.01, now + 0.2);
+                    
+                    osc.start(now);
+                    osc.stop(now + 0.2);
+                } catch(e) {}
+            }
+
+            // Som de explosão total (Game Over)
+            playExplosion() {
+                this.init();
+                if (!this.ctx) return;
+                try {
+                    const now = this.ctx.currentTime;
+                    const bufferSize = this.ctx.sampleRate * 0.5;
+                    const buffer = this.ctx.createBuffer(1, bufferSize, this.ctx.sampleRate);
+                    const data = buffer.getChannelData(0);
+                    for (let i = 0; i < bufferSize; i++) {
+                        data[i] = Math.random() * 2 - 1;
+                    }
+                    
+                    const noise = this.ctx.createBufferSource();
+                    noise.buffer = buffer;
+                    
+                    const filter = this.ctx.createBiquadFilter();
+                    filter.type = 'lowpass';
+                    filter.frequency.setValueAtTime(200, now);
+                    filter.frequency.exponentialRampToValueAtTime(10, now + 0.5);
+                    
+                    const gain = this.ctx.createGain();
+                    gain.gain.setValueAtTime(this.volume * 0.5, now);
+                    gain.gain.exponentialRampToValueAtTime(0.01, now + 0.5);
+                    
+                    noise.connect(filter);
+                    filter.connect(gain);
+                    gain.connect(this.ctx.destination);
+                    
+                    noise.start(now);
+                    noise.stop(now + 0.5);
+                } catch(e) {}
+            }
+
+            // Fanfarra clássica simplificada para vitória
+            playVictory() {
+                this.init();
+                if (!this.ctx) return;
+                try {
+                    const now = this.ctx.currentTime;
+                    const notes = [
+                        { f: 523.25, d: 0.15 }, // C5
+                        { f: 523.25, d: 0.15 }, // C5
+                        { f: 523.25, d: 0.15 }, // C5
+                        { f: 698.46, d: 0.40 }, // F5
+                        { f: 1046.50, d: 0.40 }, // C6
+                        { f: 932.33, d: 0.12 }, // Bb5
+                        { f: 880.00, d: 0.12 }, // A5
+                        { f: 783.99, d: 0.12 }, // G5
+                        { f: 1396.91, d: 0.45 }, // F6
+                        { f: 1046.50, d: 0.3 }   // C6
+                    ];
+                    let time = now;
+                    notes.forEach(note => {
+                        const osc = this.ctx.createOscillator();
+                        const gain = this.ctx.createGain();
+                        osc.connect(gain);
+                        gain.connect(this.ctx.destination);
+                        
+                        osc.type = 'triangle';
+                        osc.frequency.setValueAtTime(note.f, time);
+                        
+                        gain.gain.setValueAtTime(this.volume * 0.08, time);
+                        gain.gain.exponentialRampToValueAtTime(0.001, time + note.d);
+                        
+                        osc.start(time);
+                        osc.stop(time + note.d);
+                        time += note.d + 0.015;
+                    });
+                } catch(e) {}
+            }
+        }
+
+
+        /* ==========================================================================
+           3. CLASSE: Particle (EFEITOS DE RASTRO E EXPLOSÃO)
+           ========================================================================== */
+        class Particle {
+            constructor(x, y, vx, vy, color, size, maxLife) {
+                this.x = x;
+                this.y = y;
+                this.vx = vx;
+                this.vy = vy;
+                this.color = color;
+                this.size = size;
+                this.life = maxLife;
+                this.maxLife = maxLife;
+            }
+
+            update() {
+                this.x += this.vx;
+                this.y += this.vy;
+                this.life--;
+            }
+
+            draw(ctx) {
+                ctx.save();
+                ctx.globalAlpha = Math.max(0, this.life / this.maxLife);
+                ctx.fillStyle = this.color;
+                ctx.beginPath();
+                ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.restore();
+            }
+        }
+
+
+        /* ==========================================================================
+           4. CLASSE: Starfield (SCROLL VERTICAL ESTRELADO)
+           ========================================================================== */
+        class Starfield {
+            constructor(canvasWidth, canvasHeight) {
+                this.canvasWidth = canvasWidth;
+                this.canvasHeight = canvasHeight;
+                this.stars = [];
+                this.init();
+            }
+
+            init() {
+                this.stars = [];
+                for (let i = 0; i < 55; i++) {
+                    this.stars.push({
+                        x: Math.random() * this.canvasWidth,
+                        y: Math.random() * this.canvasHeight,
+                        size: 0.5 + Math.random() * 1.6,
+                        speed: 0.8 + Math.random() * 2.2,
+                        color: Math.random() > 0.8 ? 'rgba(0, 229, 255, 0.8)' : '#ffffff'
+                    });
+                }
+            }
+
+            update(warpFactor = 1) {
+                this.stars.forEach(star => {
+                    star.y += star.speed * warpFactor;
+                    if (star.y > this.canvasHeight) {
+                        star.y = 0;
+                        star.x = Math.random() * this.canvasWidth;
+                    }
+                });
+            }
+
+            draw(ctx, warpFactor = 1) {
+                ctx.save();
+                this.stars.forEach(star => {
+                    ctx.fillStyle = star.color;
+                    
+                    if (warpFactor > 3) {
+                        // Linhas longas imitando efeito clássico de Star Wars no hiperespaço
+                        ctx.strokeStyle = star.color;
+                        ctx.lineWidth = star.size * 0.9;
+                        ctx.beginPath();
+                        ctx.moveTo(star.x, star.y);
+                        // A velocidade estica a estrela verticalmente
+                        ctx.lineTo(star.x, star.y - star.speed * warpFactor * 0.8);
+                        ctx.stroke();
+                    } else {
+                        // Desenho padrão circular
+                        ctx.beginPath();
+                        ctx.arc(star.x, star.y, star.size, 0, Math.PI * 2);
+                        ctx.fill();
+                    }
+                });
+                ctx.restore();
+            }
+        }
+
+
+        /* ==========================================================================
+           5. CLASSE: Player (A MILLENNIUM FALCON)
+           ========================================================================== */
+        class Player {
+            constructor(canvasWidth, canvasHeight) {
+                this.canvasWidth = canvasWidth;
+                this.canvasHeight = canvasHeight;
+                
+                this.x = canvasWidth / 2;
+                this.y = canvasHeight - 100;
+                
+                // Física de Inércia (Vetor Velocidade)
+                this.vx = 0;
+                this.vy = 0;
+                this.acceleration = 0.55;
+                this.friction = 0.92;
+                
+                this.radius = 17; // Raio para colisão circular
+                this.width = 42;
+                this.height = 46;
+                
+                // Vidas e Dano
+                this.lives = 3;
+                this.invincibleTimer = 0; // Se maior que zero, está em invencibilidade piscando
+                this.isDead = false;
+            }
+
+            takeDamage() {
+                if (this.invincibleTimer > 0 || this.isDead) return false;
+                
+                this.lives--;
+                this.invincibleTimer = 90; // 1.5 segundos a 60 FPS
+                
+                if (this.lives <= 0) {
+                    this.isDead = true;
+                }
+                return true;
+            }
+
+            update(keys, sfx) {
+                if (this.isDead) return;
+
+                // Captura direções do teclado
+                let moved = false;
+                if (keys['ArrowLeft'] || keys['KeyA']) {
+                    this.vx -= this.acceleration;
+                    moved = true;
+                }
+                if (keys['ArrowRight'] || keys['KeyD']) {
+                    this.vx += this.acceleration;
+                    moved = true;
+                }
+                if (keys['ArrowUp'] || keys['KeyW']) {
+                    this.vy -= this.acceleration;
+                    moved = true;
+                }
+                if (keys['ArrowDown'] || keys['KeyS']) {
+                    this.vy += this.acceleration;
+                    moved = true;
+                }
+
+                // Toca som de motor caso esteja acelerando
+                if (moved && Math.random() > 0.7) {
+                    sfx.playEngine();
+                }
+
+                // Aplica atrito/inércia no vetor velocidade
+                this.vx *= this.friction;
+                this.vy *= this.friction;
+
+                // Atualiza posição
+                this.x += this.vx;
+                this.y += this.vy;
+
+                // Limita a nave dentro dos limites do canvas
+                if (this.x < this.radius) {
+                    this.x = this.radius;
+                    this.vx = 0;
+                }
+                if (this.x > this.canvasWidth - this.radius) {
+                    this.x = this.canvasWidth - this.radius;
+                    this.vx = 0;
+                }
+                // Movimenta-se entre a metade do canvas e o rodapé
+                if (this.y < 120) { // Não permite passar da zona de voo do botão NÃO
+                    this.y = 120;
+                    this.vy = 0;
+                }
+                if (this.y > this.canvasHeight - this.radius - 20) {
+                    this.y = this.canvasHeight - this.radius - 20;
+                    this.vy = 0;
+                }
+
+                // Decrementa timer de invencibilidade
+                if (this.invincibleTimer > 0) {
+                    this.invincibleTimer--;
+                }
+            }
+
+            draw(ctx, imgRef, particles) {
+                if (this.isDead) return;
+
+                // Pisca a nave se estiver sob invencibilidade temporária
+                if (this.invincibleTimer > 0 && Math.floor(this.invincibleTimer / 4) % 2 === 0) {
+                    return; // Pula o frame de desenho para simular o piscar
+                }
+
+                ctx.save();
+                ctx.translate(this.x, this.y);
+
+                // Rastro do Motor Traseiro (Plasma Azul de dobra)
+                const thrustWidth = 24;
+                const thrustHeight = 6 + Math.random() * 8;
+                ctx.fillStyle = '#00e5ff';
+                ctx.beginPath();
+                ctx.arc(0, this.height/2 - 10, thrustWidth/2, 0, Math.PI, false);
+                ctx.fill();
+
+                // Adiciona faíscas de motor na esteira
+                if (Math.random() > 0.35) {
+                    particles.push(new Particle(
+                        this.x + (Math.random() * 20 - 10),
+                        this.y + 15,
+                        Math.random() * 0.8 - 0.4,
+                        3 + Math.random() * 2,
+                        'rgba(0, 229, 255, 0.7)',
+                        1.5 + Math.random() * 1.5,
+                        10 + Math.random() * 10
+                    ));
+                }
+
+                if (imgRef && imgRef.complete && imgRef.naturalWidth !== 0) {
+                    ctx.drawImage(imgRef, -this.width / 2, -this.height / 2, this.width, this.height);
+                } else {
+                    /* --------------------------------------------------------------
+                       FALLBACK: DESENHO VETORIAL TOP-DOWN DE ALTA QUALIDADE DA MILLENNIUM FALCON
+                       -------------------------------------------------------------- */
+                    ctx.lineWidth = 1.8;
+
+                    // 1. Mandíbulas Frontais (Garra de carga dianteira)
+                    ctx.fillStyle = '#cfd4dc';
+                    ctx.strokeStyle = '#5c6470';
+                    ctx.beginPath();
+                    ctx.rect(-13, -24, 7, 14); // Mandíbula Esquerda
+                    ctx.rect(6, -24, 7, 14);  // Mandíbula Direita
+                    ctx.fill();
+                    ctx.stroke();
+
+                    // Rampa de carregamento central (detalhe entre garras)
+                    ctx.fillStyle = '#3a3f47';
+                    ctx.fillRect(-6, -18, 12, 6);
+
+                    // 2. Disco do Casco Principal (Corpo redondo)
+                    ctx.fillStyle = '#e1e5eb';
+                    ctx.strokeStyle = '#5c6470';
+                    ctx.beginPath();
+                    ctx.arc(0, 0, 16, 0, Math.PI * 2);
+                    ctx.fill();
+                    ctx.stroke();
+
+                    // 3. Cockpit Lateral Direito (Tubo estendido com cabine redonda)
+                    ctx.fillStyle = '#cfd4dc';
+                    ctx.beginPath();
+                    ctx.rect(13, -7, 6, 9); // Conector
+                    ctx.fill();
+                    ctx.stroke();
+
+                    ctx.fillStyle = '#e1e5eb';
+                    ctx.beginPath();
+                    ctx.arc(17, -8, 4.5, 0, Math.PI * 2); // Cabine
+                    ctx.fill();
+                    ctx.stroke();
+
+                    ctx.fillStyle = 'rgba(0, 229, 255, 0.7)'; // Vidro ciano
+                    ctx.beginPath();
+                    ctx.arc(17, -9, 2.5, 0, Math.PI * 2);
+                    ctx.fill();
+
+                    // 4. Detalhes de Placas de Blindagem Imperfeitas (Visual Millenium Falcon)
+                    ctx.fillStyle = '#b64242'; // Placa vermelha danificada
+                    ctx.fillRect(-10, -5, 4, 6);
+                    ctx.fillStyle = '#7a818e'; // Placa cinza escura de manutenção
+                    ctx.fillRect(4, 3, 5, 5);
+
+                    // 5. Antena Retificadora de Sensor Radar
+                    ctx.strokeStyle = '#3a3f47';
+                    ctx.lineWidth = 1.2;
+                    ctx.beginPath();
+                    ctx.moveTo(-11, -8);
+                    ctx.lineTo(-7, -12); // Haste
+                    ctx.stroke();
+
+                    ctx.fillStyle = '#7a818e';
+                    ctx.beginPath();
+                    ctx.arc(-7, -12, 2.5, 0, Math.PI*2); // Prato radar
+                    ctx.fill();
+                    ctx.stroke();
+
+                    // 6. Torre de Canhão Laser Quadruplo Central
+                    ctx.fillStyle = '#3a3f47';
+                    ctx.beginPath();
+                    ctx.arc(0, 0, 4.5, 0, Math.PI*2);
+                    ctx.fill();
+                    ctx.stroke();
+                    // Canhões apontando para cima
+                    ctx.strokeStyle = '#3a3f47';
+                    ctx.lineWidth = 1.5;
+                    ctx.beginPath();
+                    ctx.moveTo(-1.5, -4);
+                    ctx.lineTo(-1.5, -10);
+                    ctx.moveTo(1.5, -4);
+                    ctx.lineTo(1.5, -10);
+                    ctx.stroke();
+                }
+
+                ctx.restore();
+            }
+        }
+
+
+        /* ==========================================================================
+           6. CLASSE: Asteroid (ROCHAS COM TRAJETÓRIA E ROTAÇÃO REALÍSTICA)
+           ========================================================================== */
+        class Asteroid {
+            constructor(canvasWidth, canvasHeight) {
+                this.canvasWidth = canvasWidth;
+                this.canvasHeight = canvasHeight;
+                
+                // Raio e tamanho variados
+                this.radius = 15 + Math.random() * 22;
+                this.x = Math.random() * canvasWidth;
+                this.y = -this.radius - 20;
+                
+                // Velocidade e rotação
+                this.vy = 2.0 + Math.random() * 4.2;
+                this.vx = Math.random() * 1.8 - 0.9;
+                this.rotation = Math.random() * Math.PI;
+                this.angularSpeed = Math.random() * 0.04 - 0.02;
+
+                // Gera offsets de raio dinâmicos na criação para desenhar contorno irregular (bumpy)
+                this.bumpiness = [];
+                this.vertices = 9 + Math.floor(Math.random() * 4); // Entre 9 e 12 vértices
+                for (let i = 0; i < this.vertices; i++) {
+                    // Offset varia entre 80% e 115% do raio base
+                    this.bumpiness.push(0.8 + Math.random() * 0.35);
+                }
+
+                // Células de crateras internas
+                this.craters = [];
+                const craterCount = Math.floor(this.radius / 7);
+                for(let i = 0; i < craterCount; i++) {
+                    this.craters.push({
+                        cx: (Math.random() * 0.5 - 0.25) * this.radius,
+                        cy: (Math.random() * 0.5 - 0.25) * this.radius,
+                        cr: 2.5 + Math.random() * (this.radius / 6)
+                    });
+                }
+            }
+
+            update() {
+                this.y += this.vy;
+                this.x += this.vx;
+                this.rotation += this.angularSpeed;
+            }
+
+            draw(ctx, imgRef) {
+                ctx.save();
+                ctx.translate(this.x, this.y);
+                ctx.rotate(this.rotation);
+
+                if (imgRef && imgRef.complete && imgRef.naturalWidth !== 0) {
+                    ctx.drawImage(imgRef, -this.radius, -this.radius, this.radius * 2, this.radius * 2);
+                } else {
+                    /* --------------------------------------------------------------
+                       FALLBACK: ROCHA ESPACIAL IRREGULAR COM CONTORNO BUMPY E CRATERAS
+                       -------------------------------------------------------------- */
+                    ctx.strokeStyle = '#575b63';
+                    ctx.lineWidth = 2;
+
+                    // Cria o degradê de sombreamento da rocha
+                    const rockGrad = ctx.createRadialGradient(
+                        -this.radius * 0.2, -this.radius * 0.2, this.radius * 0.1,
+                        0, 0, this.radius
+                    );
+                    rockGrad.addColorStop(0, '#858b96');
+                    rockGrad.addColorStop(0.7, '#50545c');
+                    rockGrad.addColorStop(1, '#2c2e33');
+
+                    ctx.fillStyle = rockGrad;
+
+                    // Desenha o contorno poligonal irregular usando os offsets pré-definidos
+                    ctx.beginPath();
+                    for (let i = 0; i < this.vertices; i++) {
+                        const angle = (i / this.vertices) * Math.PI * 2;
+                        const r = this.radius * this.bumpiness[i];
+                        const vx = Math.cos(angle) * r;
+                        const vy = Math.sin(angle) * r;
+                        
+                        if (i === 0) {
+                            ctx.moveTo(vx, vy);
+                        } else {
+                            ctx.lineTo(vx, vy);
+                        }
+                    }
+                    ctx.closePath();
+                    ctx.fill();
+                    ctx.stroke();
+
+                    // Desenha as crateras sombreadas na superfície do asteroide
+                    ctx.fillStyle = 'rgba(20, 20, 25, 0.35)';
+                    ctx.strokeStyle = 'rgba(255, 255, 255, 0.08)';
+                    ctx.lineWidth = 1;
+                    this.craters.forEach(crater => {
+                        ctx.beginPath();
+                        ctx.arc(crater.cx, crater.cy, crater.cr, 0, Math.PI * 2);
+                        ctx.fill();
+                        ctx.stroke();
+                    });
+                }
+
+                ctx.restore();
+            }
+
+            // Colisão baseada em raios circulares
+            checkCollision(playerObj) {
+                const dx = this.x - playerObj.x;
+                const dy = this.y - playerObj.y;
+                const dist = Math.sqrt(dx*dx + dy*dy);
+                // Tolerância extra ligeiramente reduzida para ser mais justo
+                return dist < (this.radius * 0.9 + playerObj.radius);
+            }
+        }
+
+
+        /* ==========================================================================
+           7. CLASSE: Laser (DISPAROS DOS LINDOS CANHÕES DO NÃO)
+           ========================================================================== */
+        class Laser {
+            constructor(x, y) {
+                this.x = x;
+                this.y = y;
+                this.width = 4;
+                this.height = 24;
+                this.speed = 7.0; // Rápido descendo verticalmente
+            }
+
+            update() {
+                this.y += this.speed;
+            }
+
+            draw(ctx) {
+                ctx.save();
+                
+                // Laser brilhante vermelho neon estilo Império
+                ctx.fillStyle = '#ff1e56';
+                ctx.shadowColor = '#ff1e56';
+                ctx.shadowBlur = 10;
+                
+                // Desenha cápsula retangular
+                ctx.beginPath();
+                ctx.rect(this.x - this.width/2, this.y, this.width, this.height);
+                ctx.fill();
+                
+                // Core interno branco do laser para parecer brilhante
+                ctx.shadowBlur = 0;
+                ctx.fillStyle = '#ffffff';
+                ctx.fillRect(this.x - this.width/4, this.y + 3, this.width/2, this.height - 6);
+                
+                ctx.restore();
+            }
+
+            // Colisão entre caixa delimitadora do laser (AABB) e o círculo do player
+            checkCollision(playerObj) {
+                const closestX = Math.max(this.x - this.width/2, Math.min(playerObj.x, this.x + this.width/2));
+                const closestY = Math.max(this.y, Math.min(playerObj.y, this.y + this.height));
+                
+                const dx = playerObj.x - closestX;
+                const dy = playerObj.y - closestY;
+                const distSquared = dx*dx + dy*dy;
+                
+                return distSquared < (playerObj.radius * playerObj.radius);
+            }
+        }
+
+
+        /* ==========================================================================
+           8. CLASSE: Game (GERENCIADOR DO MINIGAME DA FASE 1)
+           ========================================================================== */
+        class Game {
+            constructor() {
+                this.canvas = document.getElementById('game-canvas');
+                this.ctx = this.canvas.getContext('2d');
+                
+                this.width = this.canvas.width;
+                this.height = this.canvas.height;
+
+                // Áudio
+                this.sfx = new SoundSynth();
+
+                // UI overlays DOM
+                this.startScreen = document.getElementById('start-screen');
+                this.gameOverScreen = document.getElementById('game-over-screen');
+                this.victoryScreen = document.getElementById('victory-screen');
+                this.hud = document.getElementById('game-hud');
+                this.timeLeftEl = document.getElementById('time-left');
+                this.finalTimeEl = document.getElementById('final-time');
+                this.progressBarEl = document.getElementById('progress-bar');
+                this.countdownEl = document.getElementById('countdown-timer');
+
+                // Vidas no HUD
+                this.heart1 = document.getElementById('heart-1');
+                this.heart2 = document.getElementById('heart-2');
+                this.heart3 = document.getElementById('heart-3');
+
+                // Estado do Jogo (START, PLAYING, GAMEOVER, VICTORY)
+                this.state = 'START';
+                
+                // Parâmetros de Sobrevivência
+                this.gameTimeTotal = 30.0; // Sobreviver 30 segundos
+                this.timeLeft = 30.0;
+
+                // Entidades
+                this.starfield = new Starfield(this.width, this.height);
+                this.player = null;
+                this.asteroids = [];
+                this.lasers = [];
+                this.particles = [];
+
+                // Posição e controle do botão "NÃO" que fica zombando
+                this.noButtonX = this.width / 2;
+                this.noButtonY = 55;
+                this.noButtonWidth = 62;
+                this.noButtonHeight = 32;
+                this.noButtonSpeed = 2.0;
+                this.noButtonDir = 1;
+
+                this.spawnInterval = 38; // Taxa de spawn dos asteroides (diminui ao longo do tempo)
+                this.spawnTimer = 0;
+                this.shootInterval = 85; // O botão NÃO atira a cada 1.4 segundos
+                this.shootTimer = 0;
+
+                // Inputs
+                this.keys = {};
+                this.victoryCountdown = 3;
+                this.countdownInterval = null;
+                this.reqId = null;
+
+                this.setupInputs();
+                this.startMenuRender();
+            }
+
+            startMenuRender() {
+                // Desenha frame inicial estático
+                this.ctx.clearRect(0, 0, this.width, this.height);
+                this.starfield.update(0.3);
+                this.starfield.draw(this.ctx, 1);
+                
+                // Desenha a nave inicial centralizada
+                const tempPlayer = new Player(this.width, this.height);
+                tempPlayer.draw(this.ctx, imgPlayer, this.particles);
+                
+                // Desenha o botão não no topo
+                this.drawNoButton(0);
+
+                this.reqId = requestAnimationFrame(() => this.startMenuRender());
+            }
+
+            setupInputs() {
+                // Mapeia pressionamentos
+                window.addEventListener('keydown', (e) => {
+                    this.keys[e.code] = true;
+                    
+                    // Comandos de interface
+                    if (e.code === 'Space' && this.state === 'START') {
+                        e.preventDefault();
+                        this.startGame();
+                    }
+                    if (e.code === 'Enter' && this.state === 'GAMEOVER') {
+                        e.preventDefault();
+                        this.restartGame();
+                    }
+                });
+
+                window.addEventListener('keyup', (e) => {
+                    this.keys[e.code] = false;
+                });
+
+                // Cliques dos botões HTML
+                document.getElementById('play-btn').addEventListener('click', () => {
+                    if (this.state === 'START') this.startGame();
+                });
+
+                document.getElementById('restart-btn').addEventListener('click', () => {
+                    if (this.state === 'GAMEOVER') this.restartGame();
+                });
+
+                // Botão de conclusão do integrador
+                document.getElementById('next-btn').addEventListener('click', () => {
+                    console.log("Fim da Fase 1 - Chamar próxima tela: Planeta");
+                    alert("Fase 1 Concluída! (Redirecionando via console.log)");
+                });
+            }
+
+            startGame() {
+                if (this.reqId) cancelAnimationFrame(this.reqId);
+                
+                this.sfx.init();
+                this.state = 'PLAYING';
+                
+                // Reset de dados
+                this.timeLeft = this.gameTimeTotal;
+                this.asteroids = [];
+                this.lasers = [];
+                this.particles = [];
+                this.spawnTimer = 0;
+                this.shootTimer = 0;
+                
+                // Instancia jogador e redefine vidas no HUD
+                this.player = new Player(this.width, this.height);
+                this.updateLivesHUD();
+                
+                // Atualiza progresso da barra
+                this.updateProgressBar();
+
+                // Esconde overlays
+                this.startScreen.classList.add('hidden');
+                this.gameOverScreen.classList.add('hidden');
+                this.victoryScreen.classList.add('hidden');
+                this.hud.classList.remove('hidden');
+
+                this.gameLoop();
+            }
+
+            restartGame() {
+                this.startGame();
+            }
+
+            updateLivesHUD() {
+                // Controla a exibição visual dos corações
+                if (this.player.lives >= 3) {
+                    this.heart1.classList.remove('lost');
+                    this.heart2.classList.remove('lost');
+                    this.heart3.classList.remove('lost');
+                } else if (this.player.lives === 2) {
+                    this.heart1.classList.remove('lost');
+                    this.heart2.classList.remove('lost');
+                    this.heart3.classList.add('lost');
+                } else if (this.player.lives === 1) {
+                    this.heart1.classList.remove('lost');
+                    this.heart2.classList.add('lost');
+                    this.heart3.classList.add('lost');
+                } else {
+                    this.heart1.classList.add('lost');
+                    this.heart2.classList.add('lost');
+                    this.heart3.classList.add('lost');
+                }
+            }
+
+            updateProgressBar() {
+                const elapsed = this.gameTimeTotal - this.timeLeft;
+                const pct = Math.min((elapsed / this.gameTimeTotal) * 100, 100);
+                this.progressBarEl.style.width = pct + '%';
+            }
+
+            triggerGameOver() {
+                this.state = 'GAMEOVER';
+                this.sfx.playExplosion();
+
+                // Shake de impacto no canvas
+                this.canvas.style.outline = '4px solid #ff1e56';
+                setTimeout(() => {
+                    this.canvas.style.outline = 'none';
+                }, 180);
+
+                // Explosão gigante de partículas
+                for (let i = 0; i < 45; i++) {
+                    const angle = Math.random() * Math.PI * 2;
+                    const spd = 2 + Math.random() * 6;
+                    this.particles.push(new Particle(
+                        this.player.x,
+                        this.player.y,
+                        Math.cos(angle) * spd,
+                        Math.sin(angle) * spd,
+                        Math.random() > 0.4 ? '#ff5e00' : (Math.random() > 0.5 ? '#ffe81f' : '#ff1e56'),
+                        3 + Math.random() * 4,
+                        35 + Math.random() * 25
+                    ));
+                }
+
+                // Salva tempo decorrido
+                const survived = (this.gameTimeTotal - this.timeLeft).toFixed(1);
+                this.finalTimeEl.innerText = survived + 's';
+
+                setTimeout(() => {
+                    if (this.state === 'GAMEOVER') {
+                        this.gameOverScreen.classList.remove('hidden');
+                        this.hud.classList.add('hidden');
+                    }
+                }, 1000);
+            }
+
+            triggerVictory() {
+                this.state = 'VICTORY';
+                this.sfx.playVictory();
+
+                // Limpa obstáculos remanescentes
+                this.asteroids = [];
+                this.lasers = [];
+
+                // Faz explosão de partículas verdes comemorativas
+                for (let i = 0; i < 30; i++) {
+                    const angle = Math.random() * Math.PI * 2;
+                    const spd = 1 + Math.random() * 4;
+                    this.particles.push(new Particle(
+                        this.player.x,
+                        this.player.y,
+                        Math.cos(angle) * spd,
+                        Math.sin(angle) * spd,
+                        Math.random() > 0.5 ? '#39ff14' : '#00e5ff',
+                        2 + Math.random() * 2.5,
+                        30 + Math.random() * 15
+                    ));
+                }
+
+                // Inicia countdown para próxima tela
+                this.victoryCountdown = 3;
+                this.countdownEl.innerText = this.victoryCountdown;
+
+                if (this.countdownInterval) clearInterval(this.countdownInterval);
+                this.countdownInterval = setInterval(() => {
+                    this.victoryCountdown--;
+                    this.countdownEl.innerText = this.victoryCountdown;
+
+                    if (this.victoryCountdown <= 0) {
+                        clearInterval(this.countdownInterval);
+                        console.log("Fim da Fase 1 - Chamar próxima tela: Planeta");
+                    }
+                }, 1000);
+
+                setTimeout(() => {
+                    this.victoryScreen.classList.remove('hidden');
+                    this.hud.classList.add('hidden');
+                }, 1800); // 1.8 segundos para dar tempo do player curtir a animação de velocidade da luz
+            }
+
+            drawNoButton(time) {
+                this.ctx.save();
+                this.ctx.translate(this.noButtonX, this.noButtonY);
+
+                // Chamas de motor zombeteiras acelerando em vitória
+                if (this.state !== 'VICTORY') {
+                    // Chamas pequenas nas laterais apontando para cima (desce verticalmente)
+                    const fSize = 6 + Math.random() * 5;
+                    this.ctx.fillStyle = '#ff1e56';
+                    
+                    this.ctx.beginPath();
+                    this.ctx.moveTo(-this.noButtonWidth/2 + 8, -this.noButtonHeight/2);
+                    this.ctx.lineTo(-this.noButtonWidth/2 + 8, -this.noButtonHeight/2 - fSize);
+                    this.ctx.lineTo(-this.noButtonWidth/2 + 13, -this.noButtonHeight/2);
+                    this.ctx.closePath();
+                    this.ctx.fill();
+
+                    this.ctx.beginPath();
+                    this.ctx.moveTo(this.noButtonWidth/2 - 13, -this.noButtonHeight/2);
+                    this.ctx.lineTo(this.noButtonWidth/2 - 13, -this.noButtonHeight/2 - fSize);
+                    this.ctx.lineTo(this.noButtonWidth/2 - 8, -this.noButtonHeight/2);
+                    this.ctx.closePath();
+                    this.ctx.fill();
+                } else {
+                    // Chama gigante e azul de dobra no hiperespaço acelerando para cima
+                    const fSize = 25 + Math.random() * 15;
+                    this.ctx.fillStyle = '#00e5ff';
+                    this.ctx.beginPath();
+                    this.ctx.moveTo(-15, this.noButtonHeight/2);
+                    this.ctx.lineTo(0, this.noButtonHeight/2 + fSize);
+                    this.ctx.lineTo(15, this.noButtonHeight/2);
+                    this.ctx.closePath();
+                    this.ctx.fill();
+
+                    // Partículas de dobra azul escapando
+                    if (Math.random() > 0.2) {
+                        this.particles.push(new Particle(
+                            this.noButtonX + (Math.random() * 20 - 10),
+                            this.noButtonY + 15,
+                            Math.random() * 0.5 - 0.25,
+                            4 + Math.random() * 3,
+                            '#00e5ff',
+                            2 + Math.random() * 2,
+                            15 + Math.random() * 10
+                        ));
+                    }
+                }
+
+                if (imgNoButton && imgNoButton.complete && imgNoButton.naturalWidth !== 0) {
+                    this.ctx.drawImage(imgNoButton, -this.noButtonWidth / 2, -this.noButtonHeight / 2, this.noButtonWidth, this.noButtonHeight);
+                } else {
+                    /* Fallback: Botão vermelho escrito NÃO */
+                    this.ctx.shadowColor = this.state === 'VICTORY' ? '#00e5ff' : '#ff1e56';
+                    this.ctx.shadowBlur = this.state === 'VICTORY' ? 18 : 12;
+
+                    this.ctx.fillStyle = '#ff1e56';
+                    this.ctx.strokeStyle = '#ffe81f';
+                    this.ctx.lineWidth = 2.5;
+
+                    const radius = this.noButtonHeight / 2;
+                    this.ctx.beginPath();
+                    this.ctx.arc(-this.noButtonWidth/2 + radius, 0, radius, Math.PI/2, 3*Math.PI/2);
+                    this.ctx.lineTo(this.noButtonWidth/2 - radius, -radius);
+                    this.ctx.arc(this.noButtonWidth/2 - radius, 0, radius, 3*Math.PI/2, Math.PI/2);
+                    this.ctx.lineTo(-this.noButtonWidth/2 + radius, radius);
+                    this.ctx.closePath();
+                    this.ctx.fill();
+                    this.ctx.stroke();
+
+                    this.ctx.shadowBlur = 0;
+
+                    this.ctx.fillStyle = 'rgba(255, 255, 255, 0.12)';
+                    this.ctx.beginPath();
+                    this.ctx.arc(-this.noButtonWidth/2 + radius, 0, radius - 2, Math.PI, 3*Math.PI/2);
+                    this.ctx.lineTo(this.noButtonWidth/2 - radius, -radius + 2);
+                    this.ctx.lineTo(this.noButtonWidth/2 - radius, 0);
+                    this.ctx.lineTo(-this.noButtonWidth/2 + radius, 0);
+                    this.ctx.closePath();
+                    this.ctx.fill();
+
+                    this.ctx.fillStyle = '#ffffff';
+                    this.ctx.font = '900 11px "Orbitron", sans-serif';
+                    this.ctx.textAlign = 'center';
+                    this.ctx.textBaseline = 'middle';
+                    this.ctx.fillText('NÃO', 0, 1.5);
+
+                    // Aletas do motor laterais
+                    this.ctx.strokeStyle = '#8a92a3';
+                    this.ctx.lineWidth = 1.8;
+                    this.ctx.beginPath();
+                    this.ctx.moveTo(-this.noButtonWidth/2 + 6, -radius);
+                    this.ctx.lineTo(-this.noButtonWidth/2 + 1, -radius - 3);
+                    this.ctx.moveTo(this.noButtonWidth/2 - 6, -radius);
+                    this.ctx.lineTo(this.noButtonWidth/2 - 1, -radius - 3);
+                    this.ctx.stroke();
+                }
+
+                this.ctx.restore();
+            }
+
+            // Loop de Animação Principal
+            gameLoop() {
+                if (this.state !== 'PLAYING' && this.state !== 'VICTORY') return;
+
+                this.ctx.clearRect(0, 0, this.width, this.height);
+
+                // --- 1. ATUALIZAÇÕES ---
+
+                // Atualiza Estrelas (Aumenta velocidade no hiperespaço)
+                const warpSpeed = this.state === 'VICTORY' ? 22 : 1.2;
+                this.starfield.update(warpSpeed);
+
+                // Atualiza Partículas
+                for (let i = this.particles.length - 1; i >= 0; i--) {
+                    this.particles[i].update();
+                    if (this.particles[i].life <= 0) {
+                        this.particles.splice(i, 1);
+                    }
+                }
+
+                if (this.state === 'PLAYING') {
+                    // Decrementa o tempo restante
+                    this.timeLeft -= 1 / 60; // 60 FPS
+                    this.timeLeftEl.innerText = Math.max(0, this.timeLeft).toFixed(1) + 's';
+                    this.updateProgressBar();
+
+                    // Verifica se atingiu 30s de sobrevivência
+                    if (this.timeLeft <= 0) {
+                        this.timeLeft = 0;
+                        this.triggerVictory();
+                    }
+
+                    // Movimento horizontal zombeteiro do botão "NÃO" no topo
+                    this.noButtonX += this.noButtonSpeed * this.noButtonDir;
+                    if (this.noButtonX < this.noButtonWidth/2 + 20) {
+                        this.noButtonX = this.noButtonWidth/2 + 20;
+                        this.noButtonDir = 1;
+                    }
+                    if (this.noButtonX > this.width - this.noButtonWidth/2 - 20) {
+                        this.noButtonX = this.width - this.noButtonWidth/2 - 20;
+                        this.noButtonDir = -1;
+                    }
+
+                    // Atualiza Jogador
+                    this.player.update(this.keys, this.sfx);
+
+                    // Criação / Spawn de Asteroides
+                    this.spawnTimer++;
+                    // Aumenta a frequência de spawn à medida que o tempo acaba (mais difícil)
+                    const adjustedInterval = Math.max(18, this.spawnInterval - Math.floor((this.gameTimeTotal - this.timeLeft) * 0.65));
+                    if (this.spawnTimer >= adjustedInterval) {
+                        this.asteroids.push(new Asteroid(this.width, this.height));
+                        this.spawnTimer = 0;
+                    }
+
+                    // Geração de disparos laser do botão "NÃO" direcionados ao jogador
+                    this.shootTimer++;
+                    if (this.shootTimer >= this.shootInterval) {
+                        this.lasers.push(new Laser(this.noButtonX, this.noButtonY + 15));
+                        this.sfx.playLaser();
+                        this.shootTimer = 0;
+                    }
+
+                    // Atualiza e remove lasers fora da tela
+                    for (let i = this.lasers.length - 1; i >= 0; i--) {
+                        const laser = this.lasers[i];
+                        laser.update();
+
+                        // Verifica colisão do laser com o jogador
+                        if (laser.checkCollision(this.player)) {
+                            this.lasers.splice(i, 1);
+                            const tookDmg = this.player.takeDamage();
+                            if (tookDmg) {
+                                this.sfx.playDamage();
+                                this.updateLivesHUD();
+                                // Shake temporário e faíscas azuis
+                                this.spawnSparkExplosion(this.player.x, this.player.y, '#ff1e56');
+                                if (this.player.isDead) {
+                                    this.triggerGameOver();
+                                    return;
+                                }
+                            }
+                            continue;
+                        }
+
+                        if (laser.y > this.height) {
+                            this.lasers.splice(i, 1);
+                        }
+                    }
+
+                    // Atualiza e remove asteroides fora da tela
+                    for (let i = this.asteroids.length - 1; i >= 0; i--) {
+                        const asteroid = this.asteroids[i];
+                        asteroid.update();
+
+                        // Verifica colisão do asteroide com o jogador
+                        if (asteroid.checkCollision(this.player)) {
+                            this.asteroids.splice(i, 1);
+                            const tookDmg = this.player.takeDamage();
+                            if (tookDmg) {
+                                this.sfx.playDamage();
+                                this.updateLivesHUD();
+                                // Faíscas laranjas de impacto
+                                this.spawnSparkExplosion(this.player.x, this.player.y, '#ff5e00');
+                                if (this.player.isDead) {
+                                    this.triggerGameOver();
+                                    return;
+                                }
+                            }
+                            continue;
+                        }
+
+                        if (asteroid.y > this.height + asteroid.radius * 2) {
+                            this.asteroids.splice(i, 1);
+                        }
+                    }
+                } else if (this.state === 'VICTORY') {
+                    // O botão "NÃO" ativa velocidade e sobe voando
+                    this.noButtonY -= 11.5;
+
+                    // O player acelera reto pelo topo
+                    this.player.vx = 0;
+                    this.player.vy = -10.0;
+                    this.player.y += this.player.vy;
+                }
+
+                // --- 2. RENDERIZAÇÃO ---
+
+                // Desenha Starfield
+                this.starfield.draw(this.ctx, warpSpeed);
+
+                // Desenha Asteroides
+                this.asteroids.forEach(ast => ast.draw(this.ctx, imgAsteroid));
+
+                // Desenha Lasers
+                this.lasers.forEach(laser => laser.draw(this.ctx));
+
+                // Desenha o botão zombeteiro "NÃO"
+                // Só desenha o botão "NÃO" se ele ainda estiver na tela
+                if (this.noButtonY > -100) {
+                    this.drawNoButton(Date.now());
+                }
+
+                // Desenha Partículas
+                this.particles.forEach(p => p.draw(this.ctx));
+
+                // Desenha o Jogador (Nave)
+                this.player.draw(this.ctx, imgPlayer, this.particles);
+
+                // Mantém o loop de requestAnimationFrame
+                this.reqId = requestAnimationFrame(() => this.gameLoop());
+            }
+
+            // Gera uma nuvem de faíscas localizada ao sofrer impacto
+            spawnSparkExplosion(x, y, color) {
+                for (let i = 0; i < 18; i++) {
+                    const angle = Math.random() * Math.PI * 2;
+                    const spd = 1.0 + Math.random() * 3.5;
+                    this.particles.push(new Particle(
+                        x,
+                        y,
+                        Math.cos(angle) * spd,
+                        Math.sin(angle) * spd,
+                        color,
+                        1.5 + Math.random() * 2.0,
+                        15 + Math.random() * 12
+                    ));
+                }
+            }
+        }
+
+        // Instancia o jogo quando o DOM carrega
+        window.addEventListener('DOMContentLoaded', () => {
+            window.gameInstance = new Game();
+        });
+    </script>
+</body>
+</html>

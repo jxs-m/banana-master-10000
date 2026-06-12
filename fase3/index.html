@@ -1,0 +1,1584 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Star Wars: A Caçada ao NÃO - Fase 3</title>
+    <meta name="description" content="Fase 3: Flappy Bird clone Star Wars. Persiga o botão NÃO pelos desfiladeiros espaciais!">
+    
+    <!-- Google Fonts para estilo Sci-Fi Premium e Retro Arcade -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Press+Start+2P&display=swap" rel="stylesheet">
+
+    <!-- CSS EMBUTIDO PARA FACILITAR A INTEGRAÇÃO POSTERIOR DA EQUIPE -->
+    <style>
+        /* ==========================================================================
+           VARIÁVEIS DE DESIGN E TEMATIZAÇÃO (ESTILO STAR WARS)
+           ========================================================================== */
+        :root {
+            --bg-dark: #020205;
+            --space-blue: #080b1e;
+            --rebel-orange: #ff5e00;
+            --imperial-red: #ff1e56;
+            --laser-green: #39ff14;
+            --hyper-blue: #00e5ff;
+            --starwars-yellow: #ffe81f;
+            --glass-bg: rgba(10, 15, 30, 0.75);
+            --glass-border: rgba(0, 229, 255, 0.2);
+            --font-sci-fi: 'Orbitron', sans-serif;
+            --font-retro: 'Press Start 2P', monospace;
+            --neon-shadow-blue: 0 0 10px rgba(0, 229, 255, 0.5), 0 0 20px rgba(0, 229, 255, 0.2);
+            --neon-shadow-red: 0 0 10px rgba(255, 30, 86, 0.5), 0 0 20px rgba(255, 30, 86, 0.2);
+            --neon-shadow-green: 0 0 10px rgba(57, 255, 20, 0.5), 0 0 20px rgba(57, 255, 20, 0.2);
+        }
+
+        /* Resets Globais */
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            user-select: none;
+            -webkit-user-select: none;
+        }
+
+        body {
+            background-color: var(--bg-dark);
+            color: #ffffff;
+            font-family: var(--font-sci-fi);
+            overflow: hidden;
+            height: 100vh;
+            width: 100vw;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        /* Wrapper principal para centralizar e ajustar escala */
+        #app-wrapper {
+            position: relative;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            width: 100%;
+            height: 100%;
+            background: radial-gradient(circle at center, var(--space-blue) 0%, var(--bg-dark) 100%);
+        }
+
+        /* Estrelas de fundo em CSS para profundidade (Paralaxe opcional) */
+        .stars-bg {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            display: block;
+            z-index: 0;
+            background: #000 url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="400" height="400" viewBox="0 0 400 400"><circle cx="15" cy="45" r="1.2" fill="white" opacity="0.8"/><circle cx="115" cy="75" r="1" fill="white" opacity="0.9"/><circle cx="235" cy="35" r="0.8" fill="white" opacity="0.5"/><circle cx="315" cy="115" r="1.5" fill="white" opacity="0.7"/><circle cx="55" cy="225" r="1.3" fill="white" opacity="0.9"/><circle cx="185" cy="175" r="0.8" fill="white" opacity="0.4"/><circle cx="285" cy="275" r="1.5" fill="white" opacity="0.8"/><circle cx="375" cy="215" r="1" fill="white" opacity="0.6"/><circle cx="95" cy="335" r="0.8" fill="white" opacity="0.5"/><circle cx="215" cy="305" r="1.2" fill="white" opacity="0.9"/><circle cx="335" cy="345" r="1" fill="white" opacity="0.7"/></svg>') repeat;
+            opacity: 0.5;
+        }
+
+        /* CONTAINER PRINCIPAL DO JOGO (Tamanho fixado 480x640 idêntico à Fase 1) */
+        #game-container {
+            position: relative;
+            width: 480px;
+            height: 640px;
+            background-color: rgba(5, 5, 12, 0.95);
+            border: 3px solid var(--hyper-blue);
+            border-radius: 16px;
+            box-shadow: 0 0 25px rgba(0, 229, 255, 0.35), inset 0 0 15px rgba(0, 229, 255, 0.1);
+            overflow: hidden;
+            z-index: 10;
+            max-width: 100vw;
+            max-height: 100vh;
+        }
+
+        /* Responsividade Automática via Escala CSS */
+        @media (max-width: 500px), (max-height: 660px) {
+            #game-container {
+                transform: scale(0.8);
+            }
+        }
+        @media (max-width: 400px), (max-height: 530px) {
+            #game-container {
+                transform: scale(0.65);
+            }
+        }
+
+        #game-canvas {
+            display: block;
+            width: 100%;
+            height: 100%;
+            background-color: transparent;
+        }
+
+        /* Estilos de Textos e Brilhos Neon */
+        .neon-text-blue {
+            color: var(--hyper-blue);
+            text-shadow: var(--neon-shadow-blue);
+        }
+        .neon-text-red {
+            color: var(--imperial-red);
+            text-shadow: var(--neon-shadow-red);
+            font-family: var(--font-retro);
+            font-size: 18px;
+            line-height: 1.5;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+        .neon-text-green {
+            color: var(--laser-green);
+            text-shadow: var(--neon-shadow-green);
+            font-family: var(--font-retro);
+            font-size: 20px;
+            margin-bottom: 15px;
+            text-align: center;
+            animation: pulse 1.5s infinite;
+        }
+
+        @keyframes pulse {
+            0% { transform: scale(1); opacity: 1; }
+            50% { transform: scale(1.03); opacity: 0.8; }
+            100% { transform: scale(1); opacity: 1; }
+        }
+
+        /* ==========================================================================
+           INTERFACES / OVERLAYS DO CANVAS
+           ========================================================================== */
+        .overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(2, 2, 5, 0.88);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            z-index: 20;
+            padding: 30px;
+            box-sizing: border-box;
+            transition: opacity 0.4s ease, visibility 0.4s ease;
+            text-align: center;
+        }
+
+        .overlay.hidden {
+            opacity: 0;
+            visibility: hidden;
+            pointer-events: none;
+        }
+
+        /* TELA DE INTRODUÇÃO / MENU */
+        .intro-title {
+            color: var(--starwars-yellow);
+            font-size: 32px;
+            font-weight: 900;
+            letter-spacing: 4px;
+            margin-bottom: 5px;
+            text-shadow: 0 0 10px rgba(255, 232, 31, 0.5);
+        }
+        
+        .intro-subtitle {
+            color: var(--imperial-red);
+            font-size: 16px;
+            font-family: var(--font-retro);
+            letter-spacing: 2px;
+            margin-bottom: 30px;
+            text-shadow: var(--neon-shadow-red);
+        }
+
+        .intro-description {
+            font-size: 13px;
+            line-height: 1.6;
+            color: rgba(255, 255, 255, 0.8);
+            margin-bottom: 35px;
+            max-width: 90%;
+            text-align: justify;
+        }
+
+        .tip-text {
+            font-size: 10px;
+            color: rgba(255, 255, 255, 0.5);
+            margin-top: 25px;
+        }
+
+        /* HUD DO JOGO (HEADS UP DISPLAY) */
+        #game-hud {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            padding: 15px 20px;
+            z-index: 15;
+            background: linear-gradient(to bottom, rgba(5, 10, 25, 0.95) 0%, rgba(5, 10, 25, 0) 100%);
+            pointer-events: none; /* Não captura cliques */
+        }
+
+        #game-hud.hidden {
+            display: none !important;
+        }
+
+        .hud-top {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            width: 100%;
+            margin-bottom: 10px;
+        }
+
+        .score-display, .target-display {
+            display: flex;
+            align-items: center;
+            background: var(--glass-bg);
+            border: 1px solid var(--glass-border);
+            border-radius: 8px;
+            padding: 6px 12px;
+            backdrop-filter: blur(4px);
+        }
+
+        .hud-label {
+            font-size: 7px;
+            font-family: var(--font-retro);
+            color: rgba(255, 255, 255, 0.6);
+            margin-right: 8px;
+        }
+
+        .hud-value {
+            font-size: 12px;
+            font-family: var(--font-retro);
+            color: var(--hyper-blue);
+            text-shadow: var(--neon-shadow-blue);
+        }
+
+        .target-display .hud-value {
+            color: var(--starwars-yellow);
+            text-shadow: 0 0 8px rgba(255, 232, 31, 0.4);
+        }
+
+        /* Barra de combustível do botão */
+        .fuel-container {
+            width: 100%;
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+            margin-top: 5px;
+        }
+
+        .fuel-label-row {
+            display: flex;
+            justify-content: space-between;
+            font-size: 9px;
+            color: var(--imperial-red);
+            font-weight: bold;
+            letter-spacing: 1px;
+            text-shadow: 0 0 5px rgba(255, 30, 86, 0.3);
+        }
+
+        .progress-container {
+            width: 100%;
+            height: 6px;
+            background-color: rgba(255, 255, 255, 0.1);
+            border-radius: 3px;
+            overflow: hidden;
+            border: 1px solid rgba(255, 255, 255, 0.05);
+        }
+
+        .progress-bar {
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(to right, var(--imperial-red), var(--rebel-orange));
+            box-shadow: 0 0 8px var(--imperial-red);
+            transition: width 0.3s ease-out;
+        }
+
+        /* TELA DE GAME OVER & VITÓRIA */
+        .final-score-text {
+            font-size: 16px;
+            margin-bottom: 30px;
+            font-family: var(--font-retro);
+        }
+
+        .victory-description {
+            font-size: 13px;
+            color: rgba(255, 255, 255, 0.85);
+            margin-bottom: 25px;
+            max-width: 90%;
+            line-height: 1.6;
+        }
+
+        .warp-countdown {
+            font-family: var(--font-retro);
+            font-size: 9px;
+            color: var(--hyper-blue);
+            text-shadow: var(--neon-shadow-blue);
+            margin-top: 25px;
+            animation: heartbeat 1s infinite;
+        }
+
+        @keyframes heartbeat {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+            100% { transform: scale(1); }
+        }
+
+        /* BOTÕES SCI-FI PREMIUM */
+        .sci-fi-btn {
+            font-family: var(--font-sci-fi);
+            font-weight: 700;
+            letter-spacing: 2px;
+            padding: 12px 30px;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: all 0.25s ease;
+            outline: none;
+            text-transform: uppercase;
+            font-size: 13px;
+        }
+
+        .main-btn {
+            background-color: var(--rebel-orange);
+            color: #ffffff;
+            border: 1px solid #ff9d00;
+            box-shadow: 0 0 12px rgba(255, 94, 0, 0.45);
+        }
+
+        .main-btn:hover {
+            background-color: #ff7700;
+            box-shadow: 0 0 20px rgba(255, 94, 0, 0.7);
+            transform: translateY(-2px);
+        }
+
+        .main-btn:active {
+            transform: translateY(0);
+        }
+
+        .start-btn-yellow {
+            background-color: var(--starwars-yellow);
+            color: #000000;
+            border: 1px solid #fffb00;
+            box-shadow: 0 0 15px rgba(255, 232, 31, 0.5);
+            font-weight: 900;
+            width: 80%;
+        }
+
+        .start-btn-yellow:hover {
+            background-color: #ffea00;
+            box-shadow: 0 0 25px rgba(255, 232, 31, 0.85);
+            transform: translateY(-2px);
+        }
+    </style>
+</head>
+<body>
+
+    <div id="app-wrapper">
+        <!-- Fundo de estrelas fixas -->
+        <div class="stars-bg"></div>
+
+        <!-- CONTAINER PRINCIPAL DO JOGO -->
+        <div id="game-container">
+            
+            <!-- CANVAS DO JOGO -->
+            <canvas id="game-canvas" width="480" height="640"></canvas>
+
+            <!-- HUD (INFORMAÇÕES NA TELA DURANTE O JOGO) -->
+            <div id="game-hud" class="hidden">
+                <div class="hud-top">
+                    <!-- Pontuação -->
+                    <div class="score-display">
+                        <span class="hud-label">DESVIOS:</span>
+                        <span id="current-score" class="hud-value">00</span>
+                    </div>
+                    <!-- Meta de vitória -->
+                    <div class="target-display">
+                        <span class="hud-label">META:</span>
+                        <span id="target-score-display" class="hud-value">10</span>
+                    </div>
+                </div>
+                <!-- Barra de combustível do botão fugitivo -->
+                <div class="fuel-container">
+                    <div class="fuel-label-row">
+                        <span>COMBUSTÍVEL DO NÃO:</span>
+                        <span id="fuel-txt">100%</span>
+                    </div>
+                    <div class="progress-container">
+                        <div id="fuel-bar" class="progress-bar"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- TELA 1: INTRODUÇÃO / MENU -->
+            <div id="start-screen" class="overlay">
+                <div class="intro-title">EPISÓDIO III</div>
+                <div class="intro-subtitle">A RECAPTURA DO NÃO</div>
+                
+                <p class="intro-description">
+                    O botão NÃO fugiu pelo buraco de minhoca e está escapando em alta velocidade!
+                    Pilote sua nave através das fendas dos walkers AT-AT gigantes e destroços imperiais. 
+                    Mantenha o foco, persiga o botão de perto e sobreviva aos obstáculos até o combustível dele acabar para capturá-lo!
+                </p>
+
+                <button id="play-btn" class="sci-fi-btn start-btn-yellow">DECOLAR (ESPAÇO)</button>
+                <p class="tip-text">Comandos: Clique com o mouse ou aperte ESPAÇO para saltar.</p>
+            </div>
+
+            <!-- TELA 2: GAME OVER -->
+            <div id="game-over-screen" class="overlay hidden">
+                <h2 class="neon-text-red">NAVE DESTRUÍDA!</h2>
+                <p class="final-score-text">Obstáculos superados: <span id="final-score" class="neon-text-blue">0</span></p>
+                
+                <button id="restart-btn" class="sci-fi-btn main-btn">TENTAR NOVAMENTE</button>
+                <p class="tip-text">Que a Força esteja com você na próxima tentativa...</p>
+            </div>
+
+            <!-- TELA 3: VITÓRIA -->
+            <div id="victory-screen" class="overlay hidden">
+                <h2 class="neon-text-green">NÃO RECAPTURADO!</h2>
+                <div class="victory-description">
+                    O propulsor do botão NÃO falhou por falta de combustível e ele caiu no chão! 
+                    Você sobreviveu às defesas imperiais e garantiu a captura. A missão foi um sucesso!
+                </div>
+                
+                <div class="warp-countdown">
+                    Finalizando missão em <span id="countdown-timer">3</span>s...
+                </div>
+
+                <button id="next-btn" class="sci-fi-btn main-btn" style="background-color: var(--laser-green); border-color: #39ff14; box-shadow: 0 0 15px rgba(57,255,20,0.4);">CONCLUIR FASE 3</button>
+            </div>
+
+        </div>
+    </div>
+
+    <!-- CÓDIGO JAVASCRIPT COMPLETO E COMENTADO -->
+    <script>
+        /* ==========================================================================
+           1. ARQUIVOS DE SPRITES (VARIÁVEIS DE CONFIGURAÇÃO DO DESIGNER)
+           Se as imagens existirem na pasta assets, o jogo as renderiza automaticamente.
+           Caso contrário, os desenhos em Canvas Vetorial (fallbacks) serão utilizados.
+           ========================================================================== */
+        const imgPlayer = new Image();
+        imgPlayer.src = './assets/xwing.png';
+
+        const imgNoButton = new Image();
+        imgNoButton.src = './assets/no_button.png';
+
+        const imgObstacleTop = new Image();
+        imgObstacleTop.src = './assets/at_at_top.png';
+
+        const imgObstacleBottom = new Image();
+        imgObstacleBottom.src = './assets/at_at_bottom.png';
+
+
+        /* ==========================================================================
+           2. CLASSE: SoundEffects (ÁUDIO SINTETIZADO COM WEB AUDIO API)
+           Sintetiza efeitos sonoros retro sci-fi sem necessidade de arquivos externos.
+           ========================================================================== */
+        class SoundEffects {
+            constructor() {
+                this.ctx = null;
+                this.volume = 0.4;
+            }
+
+            init() {
+                if (!this.ctx) {
+                    this.ctx = new (window.AudioContext || window.webkitAudioContext)();
+                }
+                if (this.ctx.state === 'suspended') {
+                    this.ctx.resume();
+                }
+            }
+
+            // Som do salto (Pew!)
+            playJump() {
+                this.init();
+                if (!this.ctx) return;
+                try {
+                    const now = this.ctx.currentTime;
+                    const osc = this.ctx.createOscillator();
+                    const gainNode = this.ctx.createGain();
+                    
+                    osc.connect(gainNode);
+                    gainNode.connect(this.ctx.destination);
+                    
+                    osc.type = 'sine';
+                    osc.frequency.setValueAtTime(140, now);
+                    // Rampa exponencial de frequência ascendente
+                    osc.frequency.exponentialRampToValueAtTime(650, now + 0.12);
+                    
+                    gainNode.gain.setValueAtTime(this.volume * 0.15, now);
+                    gainNode.gain.linearRampToValueAtTime(0.01, now + 0.12);
+                    
+                    osc.start(now);
+                    osc.stop(now + 0.12);
+                } catch (e) { console.warn(e); }
+            }
+
+            // Som da colisão/explosão (Boom!)
+            playExplosion() {
+                this.init();
+                if (!this.ctx) return;
+                try {
+                    const now = this.ctx.currentTime;
+                    // Gera ruído branco para a explosão
+                    const bufferSize = this.ctx.sampleRate * 0.4;
+                    const buffer = this.ctx.createBuffer(1, bufferSize, this.ctx.sampleRate);
+                    const data = buffer.getChannelData(0);
+                    for (let i = 0; i < bufferSize; i++) {
+                        data[i] = Math.random() * 2 - 1;
+                    }
+                    
+                    const noiseNode = this.ctx.createBufferSource();
+                    noiseNode.buffer = buffer;
+                    
+                    const filter = this.ctx.createBiquadFilter();
+                    filter.type = 'lowpass';
+                    filter.frequency.setValueAtTime(250, now);
+                    filter.frequency.exponentialRampToValueAtTime(10, now + 0.4);
+                    
+                    const gainNode = this.ctx.createGain();
+                    gainNode.gain.setValueAtTime(this.volume * 0.4, now);
+                    gainNode.gain.exponentialRampToValueAtTime(0.01, now + 0.4);
+                    
+                    noiseNode.connect(filter);
+                    filter.connect(gainNode);
+                    gainNode.connect(this.ctx.destination);
+                    
+                    noiseNode.start(now);
+                    noiseNode.stop(now + 0.4);
+                } catch (e) { console.warn(e); }
+            }
+
+            // Som de ponto marcado (Beep de droide)
+            playScore() {
+                this.init();
+                if (!this.ctx) return;
+                try {
+                    const now = this.ctx.currentTime;
+                    const osc = this.ctx.createOscillator();
+                    const gainNode = this.ctx.createGain();
+                    
+                    osc.connect(gainNode);
+                    gainNode.connect(this.ctx.destination);
+                    
+                    osc.type = 'sine';
+                    // Sons sequenciais rápidos simulando o R2D2
+                    osc.frequency.setValueAtTime(900, now);
+                    osc.frequency.setValueAtTime(1350, now + 0.07);
+                    
+                    gainNode.gain.setValueAtTime(this.volume * 0.08, now);
+                    gainNode.gain.setValueAtTime(this.volume * 0.08, now + 0.07);
+                    gainNode.gain.linearRampToValueAtTime(0.01, now + 0.18);
+                    
+                    osc.start(now);
+                    osc.stop(now + 0.18);
+                } catch (e) { console.warn(e); }
+            }
+
+            // Som de vitória (Fanfarra da Força)
+            playVictory() {
+                this.init();
+                if (!this.ctx) return;
+                try {
+                    const now = this.ctx.currentTime;
+                    // Notas simplificadas do tema de Star Wars
+                    const notes = [
+                        { f: 587.33, d: 0.15 }, // D5
+                        { f: 587.33, d: 0.15 }, // D5
+                        { f: 587.33, d: 0.15 }, // D5
+                        { f: 783.99, d: 0.45 }, // G5
+                        { f: 1174.66, d: 0.45 }, // D6
+                        { f: 1046.50, d: 0.15 }, // C6
+                        { f: 987.77, d: 0.15 }, // B5
+                        { f: 880.00, d: 0.15 }, // A5
+                        { f: 1567.98, d: 0.45 }, // G6
+                        { f: 1174.66, d: 0.3 }   // D6
+                    ];
+                    
+                    let timeOffset = now;
+                    notes.forEach(note => {
+                        const osc = this.ctx.createOscillator();
+                        const gainNode = this.ctx.createGain();
+                        
+                        osc.connect(gainNode);
+                        gainNode.connect(this.ctx.destination);
+                        
+                        osc.type = 'square'; // Som com pegada retro 8bit
+                        osc.frequency.setValueAtTime(note.f, timeOffset);
+                        
+                        gainNode.gain.setValueAtTime(this.volume * 0.06, timeOffset);
+                        gainNode.gain.exponentialRampToValueAtTime(0.001, timeOffset + note.d);
+                        
+                        osc.start(timeOffset);
+                        osc.stop(timeOffset + note.d);
+                        
+                        timeOffset += note.d + 0.02; // Pequena folga entre notas
+                    });
+                } catch (e) { console.warn(e); }
+            }
+        }
+
+
+        /* ==========================================================================
+           3. CLASSE: Particle (EFEITOS DE RASTRO E EXPLOSÕES)
+           ========================================================================== */
+        class Particle {
+            constructor(x, y, vx, vy, color, size, maxLife) {
+                this.x = x;
+                this.y = y;
+                this.vx = vx;
+                this.vy = vy;
+                this.color = color;
+                this.size = size;
+                this.life = maxLife;
+                this.maxLife = maxLife;
+            }
+
+            update() {
+                this.x += this.vx;
+                this.y += this.vy;
+                this.life--;
+            }
+
+            draw(ctx) {
+                ctx.save();
+                ctx.globalAlpha = Math.max(0, this.life / this.maxLife);
+                ctx.fillStyle = this.color;
+                ctx.beginPath();
+                ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.restore();
+            }
+        }
+
+
+        /* ==========================================================================
+           4. CLASSE: Star (FUNDO PARALAXE DE ESTRELAS NO CANVAS)
+           ========================================================================== */
+        class Star {
+            constructor(canvasWidth, canvasHeight, isFar = false) {
+                this.canvasWidth = canvasWidth;
+                this.canvasHeight = canvasHeight;
+                this.x = Math.random() * canvasWidth;
+                this.y = Math.random() * canvasHeight;
+                // Estrelas distantes são menores e mais lentas, próximas são maiores e velozes
+                this.size = isFar ? 0.5 + Math.random() * 0.8 : 1.2 + Math.random() * 1.5;
+                this.speed = isFar ? 0.15 + Math.random() * 0.3 : 0.7 + Math.random() * 1.0;
+                this.color = isFar ? 'rgba(255, 255, 255, 0.35)' : (Math.random() > 0.85 ? 'rgba(0, 229, 255, 0.75)' : 'rgba(255, 255, 255, 0.75)');
+            }
+
+            update(speedMultiplier) {
+                this.x -= this.speed * speedMultiplier;
+                if (this.x < 0) {
+                    this.x = this.canvasWidth;
+                    this.y = Math.random() * this.canvasHeight;
+                }
+            }
+
+            draw(ctx) {
+                ctx.fillStyle = this.color;
+                ctx.fillRect(this.x, this.y, this.size, this.size);
+            }
+        }
+
+
+        /* ==========================================================================
+           5. CLASSE: Player (FÍSICA DA NAVE E DESENHO VETORIAL DE FALLBACK)
+           ========================================================================== */
+        class Player {
+            constructor(x, y) {
+                this.x = x;
+                this.y = y;
+                this.width = 44;
+                this.height = 24;
+                this.vy = 0;
+                this.gravity = 0.44;
+                this.jumpStrength = -7.5;
+                this.rotation = 0;
+            }
+
+            jump() {
+                this.vy = this.jumpStrength;
+            }
+
+            update(isDead, groundY) {
+                if (!isDead) {
+                    this.vy += this.gravity;
+                    if (this.vy > 9.5) this.vy = 9.5; // Velocidade terminal de queda
+                    this.y += this.vy;
+                    // Rotaciona a nave baseado na direção vertical
+                    this.rotation = Math.max(-0.4, Math.min(0.6, this.vy * 0.08));
+                } else {
+                    // Se estiver destruída, cai girando
+                    this.vy += this.gravity * 1.5;
+                    this.y += this.vy;
+                    this.rotation = Math.min(Math.PI / 2, this.rotation + 0.1);
+                    if (this.y > groundY - this.height/2) {
+                        this.y = groundY - this.height/2;
+                        this.vy = 0;
+                    }
+                }
+            }
+
+            draw(ctx, imgRef, particles, isDead) {
+                ctx.save();
+                ctx.translate(this.x, this.y);
+                ctx.rotate(this.rotation);
+
+                // Efeito visual do propulsor (Fogo azul)
+                if (!isDead) {
+                    const flameSize = 10 + Math.random() * 8;
+                    // Desenha o rastro do propulsor primário
+                    ctx.fillStyle = '#00e5ff';
+                    ctx.beginPath();
+                    ctx.moveTo(-18, -4);
+                    ctx.lineTo(-18 - flameSize, -4);
+                    ctx.lineTo(-18, -2);
+                    ctx.closePath();
+                    ctx.fill();
+
+                    ctx.beginPath();
+                    ctx.moveTo(-18, 4);
+                    ctx.lineTo(-18 - flameSize, 4);
+                    ctx.lineTo(-18, 2);
+                    ctx.closePath();
+                    ctx.fill();
+
+                    // Insere partículas no array de fumaça atrás da nave
+                    if (Math.random() > 0.4) {
+                        particles.push(new Particle(
+                            this.x - 20,
+                            this.y + (Math.random() * 8 - 4),
+                            -2 - Math.random() * 2,
+                            Math.random() * 1.6 - 0.8,
+                            Math.random() > 0.5 ? 'rgba(0, 229, 255, 0.6)' : 'rgba(255, 255, 255, 0.4)',
+                            2 + Math.random() * 2,
+                            12 + Math.random() * 10
+                        ));
+                    }
+                }
+
+                // Renderiza a Imagem do Player se estiver carregada
+                if (imgRef && imgRef.complete && imgRef.naturalWidth !== 0) {
+                    ctx.drawImage(imgRef, -this.width / 2, -this.height / 2, this.width, this.height);
+                } else {
+                    /* --------------------------------------------------------------
+                       FALLBACK: RENDER VETORIAL DE ALTA FIDELIDADE DE UMA X-WING
+                       -------------------------------------------------------------- */
+                    // 1. Asas Abertas (S-foils em posição de ataque)
+                    ctx.strokeStyle = '#9ca4b0';
+                    ctx.lineWidth = 2.5;
+
+                    // Asa superior esquerda
+                    ctx.beginPath();
+                    ctx.moveTo(-4, -2);
+                    ctx.lineTo(-18, -13);
+                    ctx.lineTo(-6, -13);
+                    ctx.lineTo(8, -2);
+                    ctx.closePath();
+                    ctx.fillStyle = '#d0d5dd';
+                    ctx.fill();
+                    ctx.stroke();
+
+                    // Asa inferior esquerda
+                    ctx.beginPath();
+                    ctx.moveTo(-4, 2);
+                    ctx.lineTo(-18, 13);
+                    ctx.lineTo(-6, 13);
+                    ctx.lineTo(8, 2);
+                    ctx.closePath();
+                    ctx.fillStyle = '#d0d5dd';
+                    ctx.fill();
+                    ctx.stroke();
+
+                    // Ponta vermelha dos canhões laser rebeldes
+                    ctx.fillStyle = '#ff1e56';
+                    ctx.fillRect(-22, -14, 5, 2);
+                    ctx.fillRect(-22, 12, 5, 2);
+
+                    // 2. Fuselagem Principal (Corpo da X-Wing)
+                    ctx.fillStyle = '#e3e8f0';
+                    ctx.strokeStyle = '#5a6275';
+                    ctx.lineWidth = 1.5;
+                    ctx.beginPath();
+                    ctx.moveTo(18, 0); // Bico (Nose)
+                    ctx.bezierCurveTo(8, -5, -12, -6, -16, -3);
+                    ctx.lineTo(-16, 3);
+                    ctx.bezierCurveTo(-12, 6, 8, 5, 18, 0);
+                    ctx.closePath();
+                    ctx.fill();
+                    ctx.stroke();
+
+                    // 3. Faixas Detalhadas de Decoração (Vermelho/Laranja Rebelde)
+                    ctx.fillStyle = '#ff5e00';
+                    ctx.beginPath();
+                    ctx.moveTo(6, -2);
+                    ctx.lineTo(11, -1);
+                    ctx.lineTo(11, 1);
+                    ctx.lineTo(6, 2);
+                    ctx.closePath();
+                    ctx.fill();
+
+                    // 4. Cockpit (Canopy em azul neon brilhante)
+                    ctx.fillStyle = 'rgba(0, 229, 255, 0.7)';
+                    ctx.strokeStyle = '#00e5ff';
+                    ctx.beginPath();
+                    ctx.ellipse(3, -1, 6, 3, 0, 0, Math.PI * 2);
+                    ctx.fill();
+                    ctx.stroke();
+
+                    // 5. Droide Astromecânico R2-D2 atrás da cabine
+                    ctx.fillStyle = '#ffffff';
+                    ctx.beginPath();
+                    ctx.arc(-4, -1.8, 2.2, 0, Math.PI * 2);
+                    ctx.fill();
+                    ctx.fillStyle = '#080b1e'; // Linhas azuis
+                    ctx.fillRect(-4, -3.8, 1, 2);
+                }
+
+                ctx.restore();
+            }
+        }
+
+
+        /* ==========================================================================
+           6. CLASSE: NoButton (O BOTÃO "NÃO" FUJITIVO COM FOGUETES E FALHA)
+           ========================================================================== */
+        class NoButton {
+            constructor(x, y) {
+                this.x = x;
+                this.y = y;
+                this.width = 62;
+                this.height = 32;
+                this.bobTimer = 0;
+                this.vy = 0;
+                this.gravity = 0.35;
+                this.outOfFuel = false;
+                this.crashed = false;
+            }
+
+            // O botão persegue o vão do obstáculo à frente ou acompanha a altura do jogador
+            update(playerY, nextObstacle, groundY) {
+                if (!this.outOfFuel) {
+                    this.bobTimer += 0.07;
+                    const bobOffset = Math.sin(this.bobTimer) * 12;
+
+                    let targetY = playerY;
+                    
+                    // Se houver um obstáculo próximo vindo, o botão voa centralizado no espaço vazio!
+                    if (nextObstacle && nextObstacle.x > this.x - 40) {
+                        targetY = nextObstacle.topHeight + nextObstacle.gap / 2;
+                    }
+
+                    // Interpolação suave para simular voo inteligente
+                    this.y += (targetY + bobOffset - this.y) * 0.07;
+                } else if (!this.crashed) {
+                    // Sem combustível: cai sobre a ação da gravidade
+                    this.vy += this.gravity;
+                    this.y += this.vy;
+
+                    // Limite com o chão
+                    if (this.y > groundY - this.height / 2) {
+                        this.y = groundY - this.height / 2;
+                        this.vy = 0;
+                        this.crashed = true;
+                    }
+                }
+            }
+
+            draw(ctx, imgRef, particles) {
+                ctx.save();
+                
+                // Rotaciona o botão quando ele estiver caindo desgovernado
+                if (this.outOfFuel && !this.crashed) {
+                    const rotation = Math.min(0.8, this.vy * 0.05);
+                    ctx.translate(this.x, this.y);
+                    ctx.rotate(rotation);
+                } else {
+                    ctx.translate(this.x, this.y);
+                }
+
+                // Efeitos visuais do motor a jato
+                if (!this.outOfFuel) {
+                    const flameSize = 10 + Math.random() * 8;
+                    ctx.fillStyle = '#ff1e56';
+                    
+                    // Jato de fogo superior
+                    ctx.beginPath();
+                    ctx.moveTo(-this.width / 2, -6);
+                    ctx.lineTo(-this.width / 2 - flameSize, -8);
+                    ctx.lineTo(-this.width / 2, -10);
+                    ctx.closePath();
+                    ctx.fill();
+
+                    // Jato de fogo inferior
+                    ctx.beginPath();
+                    ctx.moveTo(-this.width / 2, 10);
+                    ctx.lineTo(-this.width / 2 - flameSize, 8);
+                    ctx.lineTo(-this.width / 2, 6);
+                    ctx.closePath();
+                    ctx.fill();
+
+                    // Core azul na base
+                    ctx.fillStyle = '#ffe81f';
+                    ctx.fillRect(-this.width / 2 - 2, -9, 3, 2);
+                    ctx.fillRect(-this.width / 2 - 2, 7, 3, 2);
+
+                    // Partículas de faísca
+                    if (Math.random() > 0.6) {
+                        particles.push(new Particle(
+                            this.x - this.width / 2,
+                            this.y + (Math.random() * 20 - 10),
+                            -3 - Math.random() * 2,
+                            Math.random() * 2 - 1,
+                            '#ff5e00',
+                            1.5 + Math.random() * 1.5,
+                            10 + Math.random() * 10
+                        ));
+                    }
+                } else if (!this.crashed) {
+                    // Sem combustível: cospe fumaça preta e fagulhas
+                    if (Math.random() > 0.25) {
+                        particles.push(new Particle(
+                            this.x - 5,
+                            this.y + (Math.random() * 10 - 5),
+                            -1 - Math.random() * 2,
+                            -0.5 - Math.random() * 1.5,
+                            Math.random() > 0.4 ? 'rgba(75, 75, 75, 0.8)' : 'rgba(30, 30, 30, 0.8)',
+                            3.5 + Math.random() * 3,
+                            30 + Math.random() * 20
+                        ));
+                    }
+                    if (Math.random() > 0.7) {
+                        particles.push(new Particle(
+                            this.x - 5,
+                            this.y + (Math.random() * 10 - 5),
+                            -2 - Math.random() * 2,
+                            Math.random() * 4 - 2,
+                            '#ffe81f',
+                            1 + Math.random() * 1,
+                            8 + Math.random() * 10
+                        ));
+                    }
+                }
+
+                // Renderiza Imagem se carregada
+                if (imgRef && imgRef.complete && imgRef.naturalWidth !== 0) {
+                    ctx.drawImage(imgRef, -this.width / 2, -this.height / 2, this.width, this.height);
+                } else {
+                    /* --------------------------------------------------------------
+                       FALLBACK: BOTÃO GLASSMORPHIC "NÃO" COM NEON E HASTES METAL
+                       -------------------------------------------------------------- */
+                    // Glow de fundo
+                    ctx.shadowColor = this.outOfFuel ? '#444' : '#ff1e56';
+                    ctx.shadowBlur = this.outOfFuel ? 2 : 12;
+
+                    // Corpo Vermelho
+                    ctx.fillStyle = this.outOfFuel ? '#3b1c21' : '#ff1e56';
+                    ctx.strokeStyle = this.outOfFuel ? '#666' : '#ffe81f';
+                    ctx.lineWidth = 2.5;
+
+                    // Formato de cápsula
+                    const radius = this.height / 2;
+                    ctx.beginPath();
+                    ctx.arc(-this.width/2 + radius, 0, radius, Math.PI/2, 3*Math.PI/2);
+                    ctx.lineTo(this.width/2 - radius, -radius);
+                    ctx.arc(this.width/2 - radius, 0, radius, 3*Math.PI/2, Math.PI/2);
+                    ctx.lineTo(-this.width/2 + radius, radius);
+                    ctx.closePath();
+                    ctx.fill();
+                    ctx.stroke();
+
+                    // Remove sombras para o texto e detalhes
+                    ctx.shadowBlur = 0;
+
+                    // Reflexo brilhante de vidro superior
+                    ctx.fillStyle = 'rgba(255, 255, 255, 0.12)';
+                    ctx.beginPath();
+                    ctx.arc(-this.width/2 + radius, 0, radius - 2, Math.PI, 3*Math.PI/2);
+                    ctx.lineTo(this.width/2 - radius, -radius + 2);
+                    ctx.lineTo(this.width/2 - radius, 0);
+                    ctx.lineTo(-this.width/2 + radius, 0);
+                    ctx.closePath();
+                    ctx.fill();
+
+                    // Texto central "NÃO"
+                    ctx.fillStyle = this.outOfFuel ? '#8a8888' : '#ffffff';
+                    ctx.font = '900 11px "Orbitron", sans-serif';
+                    ctx.textAlign = 'center';
+                    ctx.textBaseline = 'middle';
+                    ctx.fillText('NÃO', 0, 1.5);
+
+                    // Suportes mecânicos traseiros
+                    ctx.strokeStyle = this.outOfFuel ? '#555' : '#8a92a3';
+                    ctx.lineWidth = 2;
+                    ctx.beginPath();
+                    ctx.moveTo(-15, -radius);
+                    ctx.lineTo(-24, -radius - 2);
+                    ctx.moveTo(-15, radius);
+                    ctx.lineTo(-24, radius + 2);
+                    ctx.stroke();
+                }
+
+                ctx.restore();
+            }
+        }
+
+
+        /* ==========================================================================
+           7. CLASSE: Obstacle (OBSTÁCULOS / PERNAS DOS AT-AT E ESTRUTURA METAL)
+           ========================================================================== */
+        class Obstacle {
+            constructor(canvasWidth, canvasHeight, index) {
+                this.canvasWidth = canvasWidth;
+                this.canvasHeight = canvasHeight;
+                this.x = canvasWidth;
+                this.width = 65;
+                this.gap = 145; // Altura da abertura para passar
+                this.passed = false;
+                this.index = index;
+
+                // Define as alturas superior e inferior mantendo espaço seguro
+                const edgeMargin = 75;
+                const groundHeight = 40;
+                const minPos = edgeMargin;
+                const maxPos = canvasHeight - this.gap - edgeMargin - groundHeight;
+                
+                this.topHeight = minPos + Math.random() * (maxPos - minPos);
+                this.bottomY = this.topHeight + this.gap;
+                this.bottomHeight = canvasHeight - this.bottomY - groundHeight;
+            }
+
+            update(speed) {
+                this.x -= speed;
+            }
+
+            draw(ctx, imgTop, imgBottom) {
+                ctx.save();
+                
+                // Desenha Obstáculo Superior
+                if (imgTop && imgTop.complete && imgTop.naturalWidth !== 0) {
+                    ctx.drawImage(imgTop, this.x, 0, this.width, this.topHeight);
+                } else {
+                    this.drawPillarFallback(ctx, this.x, 0, this.width, this.topHeight, true);
+                }
+
+                // Desenha Obstáculo Inferior
+                if (imgBottom && imgBottom.complete && imgBottom.naturalWidth !== 0) {
+                    ctx.drawImage(imgBottom, this.x, this.bottomY, this.width, this.bottomHeight);
+                } else {
+                    this.drawPillarFallback(ctx, this.x, this.bottomY, this.width, this.bottomHeight, false);
+                }
+
+                ctx.restore();
+            }
+
+            // Fallback de pilares mecânicos com estilo de pernas de AT-AT ou torres imperiais
+            drawPillarFallback(ctx, x, y, width, height, isTop) {
+                // Degradê metálico
+                const grad = ctx.createLinearGradient(x, y, x + width, y);
+                grad.addColorStop(0, '#2e3340');
+                grad.addColorStop(0.3, '#4d5568');
+                grad.addColorStop(0.7, '#2e3340');
+                grad.addColorStop(1, '#181b22');
+                
+                ctx.fillStyle = grad;
+                ctx.fillRect(x, y, width, height);
+
+                // Desenha painéis e linhas de junção de aço
+                ctx.strokeStyle = 'rgba(0, 0, 0, 0.45)';
+                ctx.lineWidth = 1.8;
+                ctx.strokeRect(x + 5, y, width - 10, height);
+
+                // Rebites ou parafusos estruturais em intervalos verticais
+                ctx.fillStyle = 'rgba(0, 0, 0, 0.6)';
+                for (let h = 15; h < height - 10; h += 35) {
+                    ctx.beginPath();
+                    ctx.arc(x + 10, y + h, 2, 0, Math.PI*2);
+                    ctx.arc(x + width - 10, y + h, 2, 0, Math.PI*2);
+                    ctx.fill();
+                }
+
+                // Faixas de aviso listradas (Amarelo e Preto) nas pontas/extremidades do vão
+                ctx.save();
+                ctx.beginPath();
+                const warningHeight = 16;
+                const warningY = isTop ? y + height - warningHeight : y;
+                ctx.rect(x, warningY, width, warningHeight);
+                ctx.clip();
+
+                ctx.fillStyle = '#ffe81f';
+                ctx.fillRect(x, warningY, width, warningHeight);
+
+                // Riscos diagonais pretos
+                ctx.strokeStyle = '#020205';
+                ctx.lineWidth = 4;
+                for (let offset = -20; offset < width + 20; offset += 9) {
+                    ctx.beginPath();
+                    ctx.moveTo(x + offset, warningY);
+                    ctx.lineTo(x + offset + 8, warningY + warningHeight);
+                    ctx.stroke();
+                }
+                ctx.restore();
+
+                // Cabeçote saliente metálico na borda do vão
+                const headY = isTop ? y + height - 6 : y;
+                ctx.fillStyle = '#656e82';
+                ctx.fillRect(x - 3, headY, width + 6, 6);
+                ctx.strokeStyle = '#121419';
+                ctx.strokeRect(x - 3, headY, width + 6, 6);
+
+                // Luz piloto vermelha piscando na ponta
+                const lightY = isTop ? y + height - 25 : y + 25;
+                const glow = (Math.floor(Date.now() / 380) % 2 === 0);
+                
+                ctx.fillStyle = glow ? '#ff1e56' : '#500';
+                ctx.shadowColor = glow ? '#ff1e56' : 'transparent';
+                ctx.shadowBlur = glow ? 8 : 0;
+                
+                ctx.beginPath();
+                ctx.arc(x + width/2, lightY, 3.5, 0, Math.PI * 2);
+                ctx.fill();
+            }
+        }
+
+
+        /* ==========================================================================
+           8. CLASSE: Game (GERENCIADOR DO ESTADO, INPUTS E FLUXO PRINCIPAL)
+           ========================================================================== */
+        class Game {
+            constructor() {
+                this.canvas = document.getElementById('game-canvas');
+                this.ctx = this.canvas.getContext('2d');
+                
+                // Dimensões estáticas
+                this.width = this.canvas.width;
+                this.height = this.canvas.height;
+                this.groundHeight = 40;
+                this.groundY = this.height - this.groundHeight;
+
+                // Áudio e Efeitos
+                this.sfx = new SoundEffects();
+                
+                // Elementos de UI DOM
+                this.startScreen = document.getElementById('start-screen');
+                this.gameOverScreen = document.getElementById('game-over-screen');
+                this.victoryScreen = document.getElementById('victory-screen');
+                this.hud = document.getElementById('game-hud');
+                this.currentScoreEl = document.getElementById('current-score');
+                this.finalScoreEl = document.getElementById('final-score');
+                this.fuelBarEl = document.getElementById('fuel-bar');
+                this.fuelTxtEl = document.getElementById('fuel-txt');
+                this.countdownEl = document.getElementById('countdown-timer');
+
+                // Estado do Jogo (START, PLAYING, GAMEOVER, VICTORY)
+                this.state = 'START';
+                
+                // Configurações
+                this.gameSpeed = 3.2; // Velocidade de rolagem horizontal
+                this.targetScore = 10; // Meta de desvios para vitória
+                this.distanceBetweenObstacles = 230; // Distância horizontal entre canos
+
+                // Entidades e Listas
+                this.stars = [];
+                this.particles = [];
+                this.obstacles = [];
+                this.player = null;
+                this.noButton = null;
+                this.score = 0;
+                
+                // Variáveis internas auxiliares
+                this.spawnDistanceCounter = 0;
+                this.obstaclesSpawnedCount = 0;
+                this.victoryCountdown = 3;
+                this.countdownInterval = null;
+                this.reqId = null;
+
+                this.initStars();
+                this.setupEventListeners();
+            }
+
+            // Inicializa fundo estrelado
+            initStars() {
+                this.stars = [];
+                // 35 estrelas de fundo distantes
+                for (let i = 0; i < 35; i++) {
+                    this.stars.push(new Star(this.width, this.height, true));
+                }
+                // 15 estrelas mais próximas (velozes)
+                for (let i = 0; i < 15; i++) {
+                    this.stars.push(new Star(this.width, this.height, false));
+                }
+            }
+
+            setupEventListeners() {
+                // Salto ao apertar espaço ou clicar/tocar
+                const triggerJump = () => {
+                    if (this.state === 'PLAYING' && !this.player.isDead) {
+                        this.player.jump();
+                        this.sfx.playJump();
+                    } else if (this.state === 'START') {
+                        this.startGame();
+                    } else if (this.state === 'GAMEOVER') {
+                        this.restartGame();
+                    }
+                };
+
+                window.addEventListener('keydown', (e) => {
+                    if (e.code === 'Space') {
+                        e.preventDefault(); // Evita scroll de página
+                        triggerJump();
+                    }
+                });
+
+                this.canvas.addEventListener('mousedown', (e) => {
+                    if (e.button === 0) { // Clique esquerdo
+                        triggerJump();
+                    }
+                });
+
+                this.canvas.addEventListener('touchstart', (e) => {
+                    e.preventDefault();
+                    triggerJump();
+                }, { passive: false });
+
+                // Eventos de botões na interface
+                document.getElementById('play-btn').addEventListener('click', () => {
+                    this.startGame();
+                });
+
+                document.getElementById('restart-btn').addEventListener('click', () => {
+                    this.restartGame();
+                });
+
+                const concludeBtn = document.getElementById('next-btn');
+                const runNextPhaseCallback = () => {
+                    console.log("Fim da Fase 3 - Chamar próxima tela");
+                    alert("Fase 3 Concluída! (Verifique o console.log para fluxo de integração)");
+                };
+                concludeBtn.addEventListener('click', runNextPhaseCallback);
+            }
+
+            startGame() {
+                this.sfx.init();
+                this.state = 'PLAYING';
+                
+                // Reseta variáveis do jogo
+                this.score = 0;
+                this.spawnDistanceCounter = this.distanceBetweenObstacles; // Garante spawn inicial logo
+                this.obstaclesSpawnedCount = 0;
+                this.obstacles = [];
+                this.particles = [];
+                
+                // Instancia Jogador e Alvo
+                this.player = new Player(100, 250);
+                this.noButton = new NoButton(320, 250);
+
+                // Configura HUD
+                this.currentScoreEl.innerText = '00';
+                this.updateFuelBar(100);
+
+                // Altera overlays
+                this.startScreen.classList.add('hidden');
+                this.gameOverScreen.classList.add('hidden');
+                this.victoryScreen.classList.add('hidden');
+                this.hud.classList.remove('hidden');
+
+                if (this.reqId) cancelAnimationFrame(this.reqId);
+                this.gameLoop();
+            }
+
+            restartGame() {
+                this.startGame();
+            }
+
+            triggerGameOver() {
+                this.state = 'GAMEOVER';
+                this.sfx.playExplosion();
+                this.player.isDead = true;
+
+                // Efeito visual na tela de tremor/piscada de impacto
+                this.canvas.style.animation = 'none';
+                this.canvas.offsetHeight; /* Trigger reflow */
+                this.canvas.style.outline = '5px solid #ff1e56';
+                setTimeout(() => {
+                    this.canvas.style.outline = 'none';
+                }, 150);
+
+                // Cria uma grande explosão de partículas amarelas, laranjas e vermelhas no ponto da colisão
+                for (let i = 0; i < 40; i++) {
+                    const angle = Math.random() * Math.PI * 2;
+                    const speed = 1.5 + Math.random() * 5;
+                    this.particles.push(new Particle(
+                        this.player.x,
+                        this.player.y,
+                        Math.cos(angle) * speed,
+                        Math.sin(angle) * speed,
+                        Math.random() > 0.45 ? (Math.random() > 0.5 ? '#ffe81f' : '#ff5e00') : '#ff1e56',
+                        2.5 + Math.random() * 3.5,
+                        30 + Math.random() * 20
+                    ));
+                }
+
+                // Atualiza pontuação final no DOM e mostra overlay
+                this.finalScoreEl.innerText = this.score;
+                
+                setTimeout(() => {
+                    if (this.state === 'GAMEOVER') {
+                        this.gameOverScreen.classList.remove('hidden');
+                        this.hud.classList.add('hidden');
+                    }
+                }, 1000); // Exibe o overlay após 1 segundo de queda dramática da nave
+            }
+
+            triggerVictory() {
+                this.state = 'VICTORY';
+                this.sfx.playVictory();
+
+                // Cria micro explosão azul/verde de pó de combustível no botão caindo
+                for (let i = 0; i < 25; i++) {
+                    const angle = Math.random() * Math.PI * 2;
+                    const speed = 1 + Math.random() * 3.5;
+                    this.particles.push(new Particle(
+                        this.noButton.x,
+                        this.noButton.y,
+                        Math.cos(angle) * speed,
+                        Math.sin(angle) * speed,
+                        Math.random() > 0.5 ? '#39ff14' : '#00e5ff',
+                        2 + Math.random() * 2,
+                        25 + Math.random() * 15
+                    ));
+                }
+
+                // Inicia countdown de transição
+                this.victoryCountdown = 3;
+                this.countdownEl.innerText = this.victoryCountdown;
+
+                if (this.countdownInterval) clearInterval(this.countdownInterval);
+                this.countdownInterval = setInterval(() => {
+                    this.victoryCountdown--;
+                    this.countdownEl.innerText = this.victoryCountdown;
+                    
+                    if (this.victoryCountdown <= 0) {
+                        clearInterval(this.countdownInterval);
+                        console.log("Fim da Fase 3 - Chamar próxima tela");
+                    }
+                }, 1000);
+
+                // Mostra overlay de vitória
+                setTimeout(() => {
+                    this.victoryScreen.classList.remove('hidden');
+                    this.hud.classList.add('hidden');
+                }, 800);
+            }
+
+            updateFuelBar(percentage) {
+                this.fuelBarEl.style.width = percentage + '%';
+                this.fuelTxtEl.innerText = Math.round(percentage) + '%';
+                
+                // Fica vermelho neon quando o combustível está crítico
+                if (percentage < 30) {
+                    this.fuelBarEl.style.background = 'var(--imperial-red)';
+                    this.fuelBarEl.style.boxShadow = '0 0 10px var(--imperial-red)';
+                } else {
+                    this.fuelBarEl.style.background = 'linear-gradient(to right, var(--imperial-red), var(--rebel-orange))';
+                    this.fuelBarEl.style.boxShadow = '0 0 8px var(--imperial-red)';
+                }
+            }
+
+            checkCollisions() {
+                if (this.player.isDead || this.state !== 'PLAYING') return;
+
+                // 1. Colisão com o Chão (Y > groundY)
+                if (this.player.y + this.player.height/2 > this.groundY) {
+                    this.triggerGameOver();
+                    return;
+                }
+
+                // 2. Colisão com o Teto (Y < 0)
+                if (this.player.y - this.player.height/2 < 0) {
+                    this.triggerGameOver();
+                    return;
+                }
+
+                // AABB Box para o player
+                const pLeft = this.player.x - this.player.width/2 + 4; // Tolerância extra de colisão
+                const pRight = this.player.x + this.player.width/2 - 4;
+                const pTop = this.player.y - this.player.height/2 + 3;
+                const pBottom = this.player.y + this.player.height/2 - 3;
+
+                // 3. Colisão com os Obstáculos
+                for (let i = 0; i < this.obstacles.length; i++) {
+                    const obs = this.obstacles[i];
+                    
+                    // Se a caixa colidir com as pernas superiores ou inferiores
+                    const isInsideX = pRight > obs.x && pLeft < obs.x + obs.width;
+                    const hitsTop = pTop < obs.topHeight;
+                    const hitsBottom = pBottom > obs.bottomY;
+
+                    if (isInsideX && (hitsTop || hitsBottom)) {
+                        this.triggerGameOver();
+                        return;
+                    }
+                }
+            }
+
+            // Loop de Animação Principal
+            gameLoop() {
+                this.ctx.clearRect(0, 0, this.width, this.height);
+
+                // --- 1. ATUALIZAÇÕES ---
+                
+                // Velocidade das estrelas aumenta se o jogador estiver em movimento ativo
+                const starsSpeed = (this.state === 'PLAYING' && !this.player.isDead) ? 1 : 0.25;
+                this.stars.forEach(star => star.update(starsSpeed));
+
+                // Partículas
+                for (let i = this.particles.length - 1; i >= 0; i--) {
+                    const p = this.particles[i];
+                    p.update();
+                    if (p.life <= 0) {
+                        this.particles.splice(i, 1);
+                    }
+                }
+
+                if (this.state === 'PLAYING') {
+                    // Atualiza jogador
+                    this.player.update(this.player.isDead, this.groundY);
+
+                    // Acha o próximo obstáculo para guiar o botão
+                    const nextObs = this.obstacles.find(obs => obs.x + obs.width > this.noButton.x);
+                    
+                    // Atualiza botão fugitivo
+                    this.noButton.update(this.player.y, nextObs, this.groundY);
+
+                    if (!this.player.isDead) {
+                        // Verifica vitória: se completou a meta de desvios e o botão colidiu no chão
+                        if (this.score >= this.targetScore) {
+                            if (!this.noButton.outOfFuel) {
+                                this.noButton.outOfFuel = true;
+                                this.updateFuelBar(0);
+                            }
+                            if (this.noButton.crashed) {
+                                this.triggerVictory();
+                            }
+                        }
+
+                        // Geração / Spawn de novos obstáculos
+                        if (this.obstaclesSpawnedCount < this.targetScore) {
+                            this.spawnDistanceCounter += this.gameSpeed;
+                            if (this.spawnDistanceCounter >= this.distanceBetweenObstacles) {
+                                this.obstacles.push(new Obstacle(this.width, this.height, this.obstaclesSpawnedCount + 1));
+                                this.obstaclesSpawnedCount++;
+                                this.spawnDistanceCounter = 0;
+                            }
+                        }
+
+                        // Atualiza e remove obstáculos passados
+                        for (let i = this.obstacles.length - 1; i >= 0; i--) {
+                            const obs = this.obstacles[i];
+                            obs.update(this.gameSpeed);
+
+                            // Marca pontuação quando passa do meio do obstáculo
+                            if (!obs.passed && obs.x + obs.width/2 < this.player.x) {
+                                obs.passed = true;
+                                this.score++;
+                                this.sfx.playScore();
+                                
+                                // Formatação de score
+                                this.currentScoreEl.innerText = this.score.toString().padStart(2, '0');
+                                
+                                // Calcula combustível restante do botão fugitivo
+                                const fuelPercent = Math.max(0, 100 - (this.score * (100 / this.targetScore)));
+                                this.updateFuelBar(fuelPercent);
+                            }
+
+                            // Limpa obstáculos fora da tela
+                            if (obs.x + obs.width < 0) {
+                                this.obstacles.splice(i, 1);
+                            }
+                        }
+
+                        // Detecção de colisão ativa
+                        this.checkCollisions();
+                    }
+                } else if (this.state === 'GAMEOVER') {
+                    // Queda dramática da nave no chão
+                    this.player.update(true, this.groundY);
+                } else if (this.state === 'VICTORY') {
+                    // O player continua voando calmamente para fora do cenário
+                    this.player.vy = 0;
+                    this.player.y += (this.groundY / 2 - this.player.y) * 0.03;
+                    this.player.x += 1.8;
+                }
+
+                // --- 2. RENDERIZAÇÃO ---
+
+                // Estrelas
+                this.stars.forEach(star => star.draw(this.ctx));
+
+                // Desenha obstáculos
+                this.obstacles.forEach(obs => obs.draw(this.ctx, imgObstacleTop, imgObstacleBottom));
+
+                // Desenha o botão "NÃO"
+                if (this.noButton) {
+                    this.noButton.draw(this.ctx, imgNoButton, this.particles);
+                }
+
+                // Desenha as partículas (fumaça e fogo)
+                this.particles.forEach(p => p.draw(this.ctx));
+
+                // Desenha o Jogador (Nave)
+                if (this.player) {
+                    this.player.draw(this.ctx, imgPlayer, this.particles, this.player.isDead);
+                }
+
+                // Desenha a faixa de terra/chão
+                this.drawGround();
+
+                // Mantém o loop ativo
+                this.reqId = requestAnimationFrame(() => this.gameLoop());
+            }
+
+            // Desenha o chão estelar
+            drawGround() {
+                this.ctx.save();
+                
+                // Gradiente para o solo
+                const groundGrad = this.ctx.createLinearGradient(0, this.groundY, 0, this.height);
+                groundGrad.addColorStop(0, '#0a0d1e');
+                groundGrad.addColorStop(1, '#020308');
+                
+                this.ctx.fillStyle = groundGrad;
+                this.ctx.fillRect(0, this.groundY, this.width, this.groundHeight);
+                
+                // Linha superior de neon ciano dividindo o solo do espaço
+                this.ctx.strokeStyle = '#00e5ff';
+                this.ctx.lineWidth = 2.5;
+                this.ctx.shadowColor = '#00e5ff';
+                this.ctx.shadowBlur = 8;
+                this.ctx.beginPath();
+                this.ctx.moveTo(0, this.groundY);
+                this.ctx.lineTo(this.width, this.groundY);
+                this.ctx.stroke();
+
+                // Linha fina verde rebelde interna
+                this.ctx.shadowBlur = 0;
+                this.ctx.strokeStyle = '#39ff14';
+                this.ctx.lineWidth = 1;
+                this.ctx.beginPath();
+                this.ctx.moveTo(0, this.groundY + 4);
+                this.ctx.lineTo(this.width, this.groundY + 4);
+                this.ctx.stroke();
+                
+                this.ctx.restore();
+            }
+        }
+
+        // Instanciação inicial ao abrir a página
+        window.addEventListener('DOMContentLoaded', () => {
+            window.gameInstance = new Game();
+        });
+    </script>
+
+</body>
+</html>
