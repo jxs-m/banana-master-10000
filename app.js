@@ -4,7 +4,7 @@
 
 // Configurações padrão do jogo
 const DEFAULT_CONFIG = {
-    nextStageUrl: "../fase2/index.html",
+    nextStageUrl: "inicio/index.html",
     winScore: 10,
     difficulty: "medium", // easy, medium, hard
     volume: 0.5
@@ -16,6 +16,9 @@ try {
     const savedConfig = localStorage.getItem("sw_trench_run_config");
     if (savedConfig) {
         gameConfig = { ...DEFAULT_CONFIG, ...JSON.parse(savedConfig) };
+        if (gameConfig.nextStageUrl === "../fase2/index.html") {
+            gameConfig.nextStageUrl = "inicio/index.html";
+        }
     }
 } catch (e) {
     console.error("Erro ao carregar configurações do localStorage", e);
@@ -778,7 +781,7 @@ function redirectToNextStage() {
     if (countdownInterval) clearInterval(countdownInterval);
     
     // Tenta navegar para a página configurada
-    const destUrl = gameConfig.nextStageUrl || "../fase2/index.html";
+    const destUrl = gameConfig.nextStageUrl || "inicio/index.html";
     console.log("Redirecionando para:", destUrl);
     window.location.href = destUrl;
 }
@@ -853,7 +856,7 @@ function saveSettings() {
     if (isNaN(newWinScore) || newWinScore < 1) newWinScore = 10;
     
     // Atualiza objeto de configuração
-    gameConfig.nextStageUrl = inputNextStageUrl.value.trim() || "../fase2/index.html";
+    gameConfig.nextStageUrl = inputNextStageUrl.value.trim() || "inicio/index.html";
     gameConfig.winScore = newWinScore;
     gameConfig.difficulty = selectGameSpeed.value;
     gameConfig.volume = parseFloat(inputAudioVolume.value) / 100;

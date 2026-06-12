@@ -10,6 +10,7 @@
 <body>
 
     <div class="stars"></div>
+    <div id="wormhole" class="wormhole hidden"></div>
 
     <div class="container" id="container">
         <h1>ACESSO RESTRITO</h1>
@@ -31,10 +32,10 @@
     <div id="game1" class="modal-overlay">
         <div class="game-title">ALERTA: CAÇA TIE INCOMING!</div>
         <div class="game-area" id="gameArea1">
-            <div class="target" id="target1" style="top: 50%; left: 50%;"></div>
+            <canvas id="dodgeCanvas" width="500" height="300"></canvas>
         </div>
-        <p>Derrote 5 Tie Fighters para escapar!</p>
-        <p id="score1">Inimigos restantes: 5</p>
+        <p>Desvie de 5 disparos de laser para escapar!</p>
+        <p id="score1">Disparos restantes: 5</p>
         <button class="game-btn" onclick="returnToMain()">Desistir</button>
     </div>
 
