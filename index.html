@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Star Wars: Trench Run - Fase 1</title>
+    <meta name="description" content="Ajude a Aliança Rebelde a escapar da Estrela da Morte nesta fase interativa espacial! Desvie das torres e acione o hiperespaço.">
+    <link rel="stylesheet" href="style.css">
+    <!-- Google Fonts para estilo Retro Arcade e Sci-Fi Premium -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Press+Start+2P&display=swap" rel="stylesheet">
+</head>
+<body>
+    <div id="app-wrapper">
+        <!-- Áudio Sintetizado por Código (Web Audio API) é gerenciado no app.js -->
+        
+        <!-- Fundo de estrelas em CSS para profundidade extra paralaxe -->
+        <div class="stars-bg"></div>
+        <div class="twinkling-bg"></div>
+
+        <!-- CONTAINER PRINCIPAL DO JOGO -->
+        <div id="game-container">
+            <!-- CANVAS DO JOGO FLAPPY BIRD -->
+            <canvas id="game-canvas" width="480" height="640"></canvas>
+
+            <!-- TELA 1: LETREIRO DE INTRODUÇÃO ESTILO STAR WARS -->
+            <div id="intro-screen" class="overlay active">
+                <div class="intro-galaxy-text">Há muito tempo, em uma galáxia muito, muito distante...</div>
+                
+                <div class="crawl-container">
+                    <div class="crawl-content" id="crawl-text">
+                        <div class="crawl-title">EPISÓDIO I</div>
+                        <div class="crawl-subtitle">FUGA DA TRINCHEIRA</div>
+                        <p>A Aliança Rebelde obteve uma vitória crucial, mas agora sua nave X-Wing está encurralada nos canais da temida ESTRELA DA MORTE.</p>
+                        <p>Para sobreviver e entregar os planos secretos para seus aliados na FASE II, você deve pilotar com extrema precisão.</p>
+                        <p>Desvie das torres de defesa laser imperiais, acumule energia e salte para o hiperespaço antes que seja tarde demais!</p>
+                        <p>Que a Força esteja com você...</p>
+                    </div>
+                </div>
+
+                <div class="intro-actions">
+                    <button id="start-btn" class="sci-fi-btn main-btn">DECOLAR (ESPAÇO)</button>
+                    <button id="skip-intro-btn" class="sci-fi-btn secondary-btn">Pular Intro</button>
+                </div>
+            </div>
+
+            <!-- HUD (INFORMAÇÕES DURANTE O JOGO) -->
+            <div id="game-hud" class="hidden">
+                <div class="hud-top">
+                    <!-- Pontuação -->
+                    <div class="score-display">
+                        <span class="hud-label">SCORE:</span>
+                        <span id="current-score" class="hud-value">00</span>
+                    </div>
+                    <!-- Meta de vitória -->
+                    <div class="target-display">
+                        <span class="hud-label">META:</span>
+                        <span id="target-score-display" class="hud-value">10</span>
+                    </div>
+                </div>
+                <!-- Barra de progresso para o Hiperespaço -->
+                <div class="progress-container">
+                    <div id="progress-bar" class="progress-bar"></div>
+                </div>
+                <!-- Botão de engrenagem para configurações -->
+                <button id="settings-btn" aria-label="Configurações" class="hud-icon-btn">⚙️</button>
+            </div>
+
+            <!-- TELA 2: GAME OVER -->
+            <div id="game-over-screen" class="overlay hidden">
+                <h2 class="neon-text-red">NAVE DESTRUÍDA</h2>
+                <p class="final-score-text">Pontos obtidos: <span id="final-score" class="neon-text-blue">0</span></p>
+                <div class="action-buttons">
+                    <button id="restart-btn" class="sci-fi-btn main-btn">TENTAR NOVAMENTE</button>
+                </div>
+                <p class="tip-text">Dica: Pressione ESPAÇO ou toque na tela para pular.</p>
+            </div>
+
+            <!-- TELA 3: VITÓRIA (HIPERESPAÇO) -->
+            <div id="victory-screen" class="overlay hidden">
+                <h2 class="neon-text-green">VITÓRIA!</h2>
+                <h3 class="victory-subtitle">HIPERESPAÇO ATIVADO</h3>
+                <p class="victory-description">Você passou pelas defesas da Estrela da Morte!</p>
+                
+                <div class="warp-countdown">
+                    Saltando para a Fase 2 em <span id="countdown-timer">3</span>s...
+                </div>
+
+                <div class="action-buttons">
+                    <button id="redirect-now-btn" class="sci-fi-btn main-btn">IR IMEDIATAMENTE</button>
+                </div>
+            </div>
+
+            <!-- MODAL: PAINEL DE CONFIGURAÇÕES -->
+            <div id="settings-modal" class="modal hidden">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h3>PAINEL DE CONTROLE</h3>
+                        <button id="close-settings-btn" class="close-btn">&times;</button>
+                    </div>
+                    <div class="modal-body">
+                        <div class="settings-group">
+                            <label for="next-stage-url">URL da Próxima Fase (Fase 2):</label>
+                            <input type="text" id="next-stage-url" placeholder="../fase2/index.html" value="../fase2/index.html">
+                            <small class="help-text">Insira o link da página criada por seus colegas.</small>
+                        </div>
+                        <div class="settings-group">
+                            <label for="win-score">Pontos para Vencer:</label>
+                            <input type="number" id="win-score" min="1" max="999" value="10">
+                            <small class="help-text">Número de torres para passar de fase.</small>
+                        </div>
+                        <div class="settings-group">
+                            <label for="game-speed">Velocidade da Missão:</label>
+                            <select id="game-speed">
+                                <option value="easy">Cadete (Fácil)</option>
+                                <option value="medium" selected>Piloto (Médio)</option>
+                                <option value="hard">Jedi (Difícil)</option>
+                            </select>
+                        </div>
+                        <div class="settings-group">
+                            <label for="audio-volume">Volume dos Efeitos:</label>
+                            <input type="range" id="audio-volume" min="0" max="100" value="50">
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button id="save-settings-btn" class="sci-fi-btn main-btn">SALVAR E REINICIAR</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Script principal do jogo -->
+    <script src="app.js"></script>
+</body>
+</html>

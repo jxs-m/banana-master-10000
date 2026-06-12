@@ -1,0 +1,663 @@
+/* ==========================================================================
+   STYLE SHEET: STAR WARS TRENCH RUN (FASE 1)
+   ========================================================================== */
+
+/* Design Tokens & Variáveis */
+:root {
+    --bg-dark: #020205;
+    --space-blue: #080b1e;
+    --rebel-orange: #ff5e00;
+    --imperial-red: #ff1e56;
+    --laser-green: #39ff14;
+    --hyper-blue: #00e5ff;
+    --starwars-yellow: #ffe81f;
+    --glass-bg: rgba(10, 15, 30, 0.75);
+    --glass-border: rgba(0, 229, 255, 0.2);
+    --font-sci-fi: 'Orbitron', sans-serif;
+    --font-retro: 'Press Start 2P', monospace;
+    --neon-shadow-blue: 0 0 10px rgba(0, 229, 255, 0.5), 0 0 20px rgba(0, 229, 255, 0.2);
+    --neon-shadow-red: 0 0 10px rgba(255, 30, 86, 0.5), 0 0 20px rgba(255, 30, 86, 0.2);
+    --neon-shadow-green: 0 0 10px rgba(57, 255, 20, 0.5), 0 0 20px rgba(57, 255, 20, 0.2);
+}
+
+/* Resets Globais */
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+    user-select: none;
+    -webkit-user-select: none;
+}
+
+body {
+    background-color: var(--bg-dark);
+    color: #ffffff;
+    font-family: var(--font-sci-fi);
+    overflow: hidden;
+    height: 100vh;
+    width: 100vw;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+/* Wrapper principal para centralizar e ajustar escala */
+#app-wrapper {
+    position: relative;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    width: 100%;
+    height: 100%;
+    background: radial-gradient(circle at center, var(--space-blue) 0%, var(--bg-dark) 100%);
+}
+
+/* ==========================================================================
+   FUNDO ESPACIAL (ESTRELAS EM CAMADAS)
+   ========================================================================== */
+.stars-bg, .twinkling-bg {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    display: block;
+    z-index: 0;
+}
+
+.stars-bg {
+    background: #000 url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="400" height="400" viewBox="0 0 400 400"><circle cx="10" cy="50" r="1" fill="white" opacity="0.8"/><circle cx="120" cy="80" r="1.5" fill="white" opacity="0.9"/><circle cx="230" cy="40" r="0.8" fill="white" opacity="0.5"/><circle cx="310" cy="120" r="1.2" fill="white" opacity="0.7"/><circle cx="50" cy="220" r="1.5" fill="white" opacity="0.9"/><circle cx="180" cy="180" r="0.8" fill="white" opacity="0.4"/><circle cx="280" cy="270" r="1.2" fill="white" opacity="0.8"/><circle cx="380" cy="210" r="1" fill="white" opacity="0.6"/><circle cx="90" cy="340" r="0.8" fill="white" opacity="0.5"/><circle cx="210" cy="310" r="1.5" fill="white" opacity="0.9"/><circle cx="330" cy="350" r="1" fill="white" opacity="0.7"/></svg>') repeat;
+}
+
+.twinkling-bg {
+    background: transparent url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="400" height="400" viewBox="0 0 400 400"><circle cx="45" cy="110" r="2" fill="white" opacity="0.9"/><circle cx="150" cy="20" r="1" fill="white" opacity="0.8"/><circle cx="260" cy="95" r="1.5" fill="white" opacity="0.9"/><circle cx="350" cy="60" r="2.5" fill="cyan" opacity="0.9"/><circle cx="80" cy="280" r="1.2" fill="white" opacity="0.7"/><circle cx="140" cy="230" r="2" fill="white" opacity="0.9"/><circle cx="290" cy="190" r="1.5" fill="white" opacity="0.8"/><circle cx="370" cy="310" r="2" fill="yellow" opacity="0.8"/><circle cx="110" cy="380" r="1" fill="white" opacity="0.6"/><circle cx="250" cy="370" r="2" fill="white" opacity="0.9"/><circle cx="300" cy="300" r="1.2" fill="white" opacity="0.7"/></svg>') repeat;
+    animation: twinkle 15s linear infinite;
+    opacity: 0.7;
+}
+
+@keyframes twinkle {
+    0% { opacity: 0.3; }
+    50% { opacity: 0.9; }
+    100% { opacity: 0.3; }
+}
+
+/* ==========================================================================
+   CONTAINER DO JOGO
+   ========================================================================== */
+#game-container {
+    position: relative;
+    width: 480px;
+    height: 640px;
+    background-color: rgba(5, 5, 10, 0.9);
+    border: 3px solid var(--hyper-blue);
+    border-radius: 16px;
+    box-shadow: 0 0 25px rgba(0, 229, 255, 0.4), inset 0 0 15px rgba(0, 229, 255, 0.1);
+    overflow: hidden;
+    z-index: 10;
+    /* Suporte a escalas responsivas em telas menores */
+    max-width: 100vw;
+    max-height: 100vh;
+}
+
+/* Responsividade Automática por Escala CSS */
+@media (max-width: 500px), (max-height: 660px) {
+    #game-container {
+        transform: scale(0.8);
+    }
+}
+@media (max-width: 400px), (max-height: 530px) {
+    #game-container {
+        transform: scale(0.65);
+    }
+}
+@media (max-width: 320px) {
+    #game-container {
+        transform: scale(0.55);
+    }
+}
+
+#game-canvas {
+    display: block;
+    width: 100%;
+    height: 100%;
+    background-color: transparent;
+}
+
+/* Estilos de Textos e Brilhos Neon */
+.neon-text-blue {
+    color: var(--hyper-blue);
+    text-shadow: var(--neon-shadow-blue);
+}
+.neon-text-red {
+    color: var(--imperial-red);
+    text-shadow: var(--neon-shadow-red);
+    font-family: var(--font-retro);
+    font-size: 20px;
+    line-height: 1.5;
+    margin-bottom: 20px;
+    text-align: center;
+}
+.neon-text-green {
+    color: var(--laser-green);
+    text-shadow: var(--neon-shadow-green);
+    font-family: var(--font-retro);
+    font-size: 24px;
+    margin-bottom: 15px;
+    text-align: center;
+    animation: pulse 1.5s infinite;
+}
+
+@keyframes pulse {
+    0% { transform: scale(1); opacity: 1; }
+    50% { transform: scale(1.05); opacity: 0.8; }
+    100% { transform: scale(1); opacity: 1; }
+}
+
+/* ==========================================================================
+   INTERFACES / OVERLAYS DO CANVAS
+   ========================================================================== */
+.overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(2, 2, 5, 0.85);
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    z-index: 20;
+    padding: 30px;
+    box-sizing: border-box;
+    transition: opacity 0.5s ease, visibility 0.5s ease;
+}
+
+.overlay.hidden {
+    opacity: 0;
+    visibility: hidden;
+    pointer-events: none;
+}
+
+/* ==========================================================================
+   TELA DE INTRODUÇÃO: LETREIRO STAR WARS
+   ========================================================================== */
+#intro-screen {
+    background-color: #000000;
+    justify-content: space-between;
+    padding: 40px 20px 30px 20px;
+}
+
+.intro-galaxy-text {
+    color: #4bd5ee;
+    font-size: 14px;
+    font-weight: 700;
+    width: 100%;
+    text-align: left;
+    margin-bottom: 20px;
+    animation: fadeOutGalaxy 4s forwards;
+    font-family: var(--font-sci-fi);
+}
+
+@keyframes fadeOutGalaxy {
+    0% { opacity: 0; }
+    15% { opacity: 1; }
+    85% { opacity: 1; }
+    100% { opacity: 0; }
+}
+
+/* Container com efeito de Perspectiva 3D */
+.crawl-container {
+    position: relative;
+    width: 100%;
+    height: 380px;
+    overflow: hidden;
+    perspective: 250px; /* Cria o ponto de fuga 3D */
+}
+
+/* Sombreamento superior/inferior para esconder o texto */
+.crawl-container::after {
+    content: "";
+    position: absolute;
+    left: 0;
+    right: 0;
+    top: 0;
+    height: 80px;
+    background: linear-gradient(to bottom, #000, transparent);
+    pointer-events: none;
+    z-index: 5;
+}
+
+.crawl-content {
+    position: absolute;
+    width: 90%;
+    left: 5%;
+    bottom: -150px;
+    transform-origin: 50% 100%;
+    transform: rotateX(22deg) translateZ(0); /* Rotaciona o texto para trás no espaço */
+    text-align: justify;
+    color: var(--starwars-yellow);
+    font-weight: 900;
+    line-height: 1.8;
+    font-size: 14px;
+    letter-spacing: 1px;
+    animation: crawlText 40s linear infinite;
+    animation-delay: 2.5s;
+}
+
+.crawl-title {
+    font-family: var(--font-sci-fi);
+    font-size: 26px;
+    text-align: center;
+    margin-bottom: 5px;
+    letter-spacing: 3px;
+}
+
+.crawl-subtitle {
+    font-family: var(--font-sci-fi);
+    font-size: 18px;
+    text-align: center;
+    margin-bottom: 25px;
+    letter-spacing: 2px;
+}
+
+.crawl-content p {
+    margin-bottom: 20px;
+    text-indent: 15px;
+}
+
+@keyframes crawlText {
+    0% {
+        top: 350px;
+        transform: rotateX(22deg) translateZ(0);
+        opacity: 1;
+    }
+    90% {
+        opacity: 1;
+    }
+    100% {
+        top: -650px;
+        transform: rotateX(25deg) translateZ(-200px);
+        opacity: 0;
+    }
+}
+
+.intro-actions {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    width: 100%;
+    align-items: center;
+    z-index: 10;
+}
+
+/* ==========================================================================
+   HUD DO JOGO (HEADS UP DISPLAY)
+   ========================================================================== */
+#game-hud {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    padding: 15px 20px;
+    z-index: 15;
+    background: linear-gradient(to bottom, rgba(5, 10, 25, 0.9) 0%, rgba(5, 10, 25, 0) 100%);
+    pointer-events: none; /* Deixa passar cliques para o canvas */
+}
+
+#game-hud.hidden {
+    display: none !important;
+}
+
+.hud-top {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    width: 100%;
+    margin-bottom: 10px;
+}
+
+.score-display, .target-display {
+    display: flex;
+    align-items: center;
+    background: var(--glass-bg);
+    border: 1px solid var(--glass-border);
+    border-radius: 8px;
+    padding: 6px 12px;
+    backdrop-filter: blur(4px);
+    box-shadow: inset 0 0 10px rgba(0, 229, 255, 0.05);
+}
+
+.hud-label {
+    font-size: 8px;
+    font-family: var(--font-retro);
+    color: rgba(255, 255, 255, 0.6);
+    margin-right: 8px;
+}
+
+.hud-value {
+    font-size: 14px;
+    font-family: var(--font-retro);
+    color: var(--hyper-blue);
+    text-shadow: var(--neon-shadow-blue);
+}
+
+.target-display .hud-value {
+    color: var(--starwars-yellow);
+    text-shadow: 0 0 8px rgba(255, 232, 31, 0.4);
+}
+
+/* Barra de Progresso de Vitória */
+.progress-container {
+    width: calc(100% - 40px);
+    height: 6px;
+    background-color: rgba(255, 255, 255, 0.1);
+    border-radius: 3px;
+    overflow: hidden;
+    position: absolute;
+    bottom: 0;
+    left: 20px;
+    border: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.progress-bar {
+    width: 0%;
+    height: 100%;
+    background: linear-gradient(to right, var(--rebel-orange), var(--hyper-blue));
+    box-shadow: 0 0 8px var(--hyper-blue);
+    transition: width 0.3s ease-out;
+}
+
+/* Botão de Engrenagem */
+.hud-icon-btn {
+    pointer-events: auto; /* Reativa cliques */
+    background: var(--glass-bg);
+    border: 1px solid var(--glass-border);
+    color: #ffffff;
+    font-size: 18px;
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    cursor: pointer;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    transition: all 0.3s ease;
+    box-shadow: var(--neon-shadow-blue);
+}
+
+.hud-icon-btn:hover {
+    background-color: rgba(0, 229, 255, 0.2);
+    border-color: var(--hyper-blue);
+    transform: rotate(45deg);
+}
+
+/* ==========================================================================
+   TELA DE GAME OVER & VITÓRIA
+   ========================================================================== */
+.final-score-text {
+    font-size: 18px;
+    margin-bottom: 30px;
+}
+
+.tip-text {
+    font-size: 11px;
+    color: rgba(255, 255, 255, 0.5);
+    margin-top: 25px;
+    text-align: center;
+}
+
+.victory-subtitle {
+    font-family: var(--font-sci-fi);
+    font-weight: 900;
+    letter-spacing: 2px;
+    color: var(--starwars-yellow);
+    margin-bottom: 20px;
+    text-shadow: 0 0 8px rgba(255, 232, 31, 0.6);
+}
+
+.victory-description {
+    font-size: 14px;
+    color: rgba(255, 255, 255, 0.8);
+    margin-bottom: 30px;
+    text-align: center;
+}
+
+.warp-countdown {
+    font-family: var(--font-retro);
+    font-size: 10px;
+    color: var(--hyper-blue);
+    text-shadow: var(--neon-shadow-blue);
+    margin-bottom: 30px;
+    animation: heartbeat 1s infinite;
+}
+
+@keyframes heartbeat {
+    0% { transform: scale(1); }
+    50% { transform: scale(1.05); }
+    100% { transform: scale(1); }
+}
+
+.action-buttons {
+    display: flex;
+    justify-content: center;
+    width: 100%;
+    z-index: 10;
+}
+
+/* ==========================================================================
+   BOTÕES COM ESTÉTICA SCI-FI
+   ========================================================================== */
+.sci-fi-btn {
+    font-family: var(--font-sci-fi);
+    font-weight: 700;
+    letter-spacing: 1px;
+    padding: 12px 24px;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: all 0.25s ease;
+    outline: none;
+    text-transform: uppercase;
+    position: relative;
+    overflow: hidden;
+}
+
+.main-btn {
+    background-color: var(--rebel-orange);
+    color: #ffffff;
+    border: 1px solid #ff9d00;
+    box-shadow: 0 0 12px rgba(255, 94, 0, 0.4);
+}
+
+.main-btn:hover {
+    background-color: #ff7700;
+    box-shadow: 0 0 20px rgba(255, 94, 0, 0.7);
+    transform: translateY(-2px);
+}
+
+.main-btn:active {
+    transform: translateY(0);
+}
+
+.secondary-btn {
+    background-color: rgba(255, 255, 255, 0.05);
+    color: rgba(255, 255, 255, 0.7);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.secondary-btn:hover {
+    background-color: rgba(255, 255, 255, 0.15);
+    color: #ffffff;
+    border-color: rgba(255, 255, 255, 0.5);
+}
+
+/* Estilo específico do botão de iniciar/decolar amarelo na intro */
+#start-btn {
+    background-color: var(--starwars-yellow);
+    color: #000000;
+    border: 1px solid #fffb00;
+    box-shadow: 0 0 15px rgba(255, 232, 31, 0.5);
+    font-weight: 900;
+    width: 80%;
+}
+
+#start-btn:hover {
+    background-color: #ffea00;
+    box-shadow: 0 0 25px rgba(255, 232, 31, 0.8);
+    transform: translateY(-2px);
+}
+
+/* ==========================================================================
+   PAINEL DE CONFIGURAÇÕES (MODAL)
+   ========================================================================== */
+.modal {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.85);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 30;
+    padding: 20px;
+    box-sizing: border-box;
+    transition: opacity 0.3s ease, visibility 0.3s ease;
+}
+
+.modal.hidden {
+    opacity: 0;
+    visibility: hidden;
+    pointer-events: none;
+}
+
+.modal-content {
+    width: 90%;
+    background: var(--glass-bg);
+    border: 2px solid var(--hyper-blue);
+    border-radius: 12px;
+    box-shadow: var(--neon-shadow-blue), inset 0 0 15px rgba(0, 0, 229, 0.2);
+    display: flex;
+    flex-direction: column;
+    backdrop-filter: blur(12px);
+    overflow: hidden;
+    animation: modalSlideIn 0.3s ease-out;
+}
+
+@keyframes modalSlideIn {
+    from { transform: translateY(30px); opacity: 0; }
+    to { transform: translateY(0); opacity: 1; }
+}
+
+.modal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 15px 20px;
+    border-bottom: 1px solid rgba(0, 229, 255, 0.2);
+}
+
+.modal-header h3 {
+    font-size: 16px;
+    color: var(--hyper-blue);
+    text-shadow: var(--neon-shadow-blue);
+    letter-spacing: 2px;
+}
+
+.close-btn {
+    background: transparent;
+    border: none;
+    color: rgba(255, 255, 255, 0.7);
+    font-size: 24px;
+    cursor: pointer;
+    transition: color 0.3s;
+}
+
+.close-btn:hover {
+    color: var(--imperial-red);
+}
+
+.modal-body {
+    padding: 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+}
+
+.settings-group {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.settings-group label {
+    font-size: 11px;
+    color: rgba(255, 255, 255, 0.8);
+    font-weight: bold;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+}
+
+.settings-group input[type="text"],
+.settings-group input[type="number"],
+.settings-group select {
+    background-color: rgba(0, 0, 0, 0.6);
+    border: 1px solid rgba(0, 229, 255, 0.3);
+    border-radius: 4px;
+    padding: 8px 12px;
+    color: #ffffff;
+    font-family: var(--font-sci-fi);
+    outline: none;
+    transition: all 0.3s ease;
+    font-size: 13px;
+}
+
+.settings-group input[type="text"]:focus,
+.settings-group input[type="number"]:focus,
+.settings-group select:focus {
+    border-color: var(--hyper-blue);
+    box-shadow: 0 0 8px rgba(0, 229, 255, 0.5);
+}
+
+.help-text {
+    font-size: 10px;
+    color: rgba(255, 255, 255, 0.4);
+}
+
+/* Estilização do slider de volume */
+.settings-group input[type="range"] {
+    -webkit-appearance: none;
+    width: 100%;
+    height: 6px;
+    background: rgba(255, 255, 255, 0.2);
+    border-radius: 3px;
+    outline: none;
+}
+
+.settings-group input[type="range"]::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 16px;
+    height: 16px;
+    border-radius: 50%;
+    background: var(--hyper-blue);
+    cursor: pointer;
+    box-shadow: 0 0 6px var(--hyper-blue);
+    transition: transform 0.1s;
+}
+
+.settings-group input[type="range"]::-webkit-slider-thumb:hover {
+    transform: scale(1.25);
+}
+
+.modal-footer {
+    padding: 15px 20px;
+    border-top: 1px solid rgba(0, 229, 255, 0.1);
+    display: flex;
+    justify-content: flex-end;
+}
+
+.modal-footer button {
+    width: 100%;
+}
