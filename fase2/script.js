@@ -174,8 +174,6 @@ function winRunnerGame() {
 
     // 2. A nave surge vinda de cima e para logo acima do Baby Yoda
     setTimeout(() => {
-        scoreDisplay2.innerText = "O botão está fugindo!";
-        scoreDisplay2.style.color = "#ff00a0";
         imperialShip.classList.add('ship-arrive-yoda');
     }, 2000);
 
