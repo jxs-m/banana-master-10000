@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sandbox - Mini Game 2</title>
+    <link rel="stylesheet" href="estilo.css">
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&display=swap" rel="stylesheet">
+</head>
+<body>
+
+    <div id="game2" class="game-container">
+        <div class="game-title">CAPTURE O BOTÃO!</div>
+        <p class="instructions">Você controla o Baby Yoda! Pule os tiros do Stormtrooper usando <strong>ESPAÇO</strong>, <strong>SETA PARA CIMA</strong> ou <strong>CLIQUE/TOQUE</strong>!</p>
+        
+        <div class="game-area runner-area" id="gameArea2">
+            <div id="runner-player">NÃO</div>
+
+            <div id="baby-yoda">
+                <img src="imagens/baby.png" alt="Baby Yoda" id="babyYodaImg">
+            </div>
+
+            <div id="runner-obstacle">
+                <div class="laser-shot"></div>
+            </div>
+
+            <div id="stormtrooper">
+                <img src="imagens/stormtrooper.png" alt="Stormtrooper" id="trooperImg">
+            </div>
+
+            <div id="imperial-ship">
+                <img src="imagens/nave.png" alt="Nave Imperial" id="shipImg">
+            </div>
+        </div>
+        
+        <p id="score2">Progresso da Perseguição: 0%</p>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>  

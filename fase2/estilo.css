@@ -1,0 +1,224 @@
+:root {
+    --neon-blue: #00f3ff;
+    --neon-red: #ff0000;
+    --dark-bg: #050505;
+    --panel-grey: #1a1a1a;
+}
+
+body {
+    margin: 0;
+    padding: 0;
+    background-color: var(--dark-bg);
+    color: white;
+    font-family: 'Orbitron', sans-serif;
+    height: 100vh;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    user-select: none;
+    overflow: hidden;
+}
+
+.game-container {
+    background: rgba(0, 10, 20, 0.9);
+    border: 2px solid #a6ff00;
+    box-shadow: 0 0 20px rgba(166, 255, 0, 0.3);
+    padding: 30px;
+    border-radius: 12px;
+    text-align: center;
+    width: 90%;
+    max-width: 550px;
+}
+
+.game-title {
+    color: #a6ff00;
+    font-size: 2.2rem;
+    font-weight: bold;
+    margin-bottom: 10px;
+    text-shadow: 0 0 10px rgba(166, 255, 0, 0.5);
+}
+
+.instructions {
+    color: #aaa;
+    font-size: 0.95rem;
+    margin-bottom: 20px;
+    line-height: 1.4;
+}
+
+/* --- ÁREA PRINCIPAL DA CORRIDA --- */
+.runner-area {
+    width: 100%;
+    height: 250px;
+    border: 2px dashed #a6ff00;
+    position: relative;
+    overflow: hidden;
+    border-radius: 6px;
+    background-image: url('Imagens/tatooine.jpg'); 
+    background-size: cover;
+    background-position: bottom;
+    background-color: #111;
+}
+
+/* --- JOGADOR: BABY YODA --- */
+#baby-yoda {
+    width: 60px;  
+    height: 60px; 
+    position: absolute;
+    bottom: 0;
+    left: 45px;   
+    z-index: 3;
+}
+
+#babyYodaImg {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+    display: block;
+}
+
+/* --- ALVO: BOTÃO NÃO --- */
+#runner-player {
+    width: 60px;
+    height: 38px;
+    background-color: var(--panel-grey);
+    color: var(--neon-red);
+    border: 2px solid var(--neon-red);
+    border-radius: 5px;
+    position: absolute;
+    bottom: 0;
+    left: 210px;  
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    font-weight: bold;
+    font-size: 1.1rem;
+    z-index: 4;
+    box-shadow: 0 0 8px var(--neon-red);
+}
+
+/* --- STORMTROOPER --- */
+#stormtrooper {
+    width: 65px;
+    height: 75px;
+    position: absolute;
+    bottom: 0;
+    right: 15px; 
+    z-index: 3;
+}
+
+#trooperImg {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+}
+
+/* --- OBSTÁCULO: TIRO DE LASER --- */
+#runner-obstacle {
+    width: 35px;  
+    height: 10px; 
+    position: absolute;
+    bottom: 25px; 
+    right: -50px; 
+    z-index: 2;
+}
+
+.laser-shot {
+    width: 100%;
+    height: 4px;
+    background-color: var(--neon-red);
+    box-shadow: 0 0 10px var(--neon-red), 0 0 4px #fff;
+    border-radius: 2px;
+}
+
+/* --- NAVE IMPERIAL --- */
+#imperial-ship {
+    width: 100px;
+    height: 80px;
+    position: absolute;
+    top: -100px; 
+    left: 210px; 
+    z-index: 2;
+    opacity: 0;
+    transition: all 1s ease-in-out;
+}
+
+#shipImg {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+}
+
+/* --- ANIMAÇÕES DE PULO --- */
+.jump-yoda {
+    animation: jumpAnimYoda 0.52s cubic-bezier(0.25, 1, 0.5, 1);
+}
+
+/* Pulo alto o suficiente para o laser passar por baixo de forma limpa */
+.jump-button {
+    animation: jumpAnimButton 0.48s cubic-bezier(0.25, 1, 0.5, 1);
+}
+
+@keyframes jumpAnimYoda {
+    0% { bottom: 0; }
+    45% { bottom: 120px; } 
+    55% { bottom: 120px; }
+    100% { bottom: 0; }
+}
+
+@keyframes jumpAnimButton {
+    0% { bottom: 0; }
+    45% { bottom: 140px; } 
+    55% { bottom: 140px; }
+    100% { bottom: 0; }
+}
+
+.obstacle-move {
+    animation: moveObstacle 1.1s infinite linear;
+}
+
+@keyframes moveObstacle {
+    0% { right: 65px; }
+    100% { right: 100%; }
+}
+
+#score2 {
+    margin-top: 25px;
+    font-size: 1.2rem;
+    font-weight: bold;
+    color: #fff;
+}
+
+/* --- ANIMAÇÕES DE FUGA (EFEITO SAIR DA TELA TRIDIMENSIONALMENTE) --- */
+
+/* O botão voa sozinho para o espaço, encolhendo até sumir da página */
+.button-fly-away {
+    transition: all 1.4s cubic-bezier(0.25, 1, 0.5, 1) !important;
+    bottom: 350px !important;
+    left: 650px !important;
+    transform: scale(0) rotate(45deg);
+    opacity: 0 !important;
+}
+
+/* A nave chega e se posiciona em cima do local onde o Baby Yoda está */
+.ship-arrive-yoda {
+    top: 30px !important;
+    left: 25px !important; 
+    opacity: 1 !important;
+    transition: all 1s ease-in-out !important;
+}
+
+/* O Baby Yoda é sugado para cima em direção à nave */
+.yoda-enter-ship {
+    transition: bottom 0.8s ease-in-out, opacity 0.4s ease-in-out;
+    bottom: 130px !important;
+    opacity: 0 !important;
+}
+
+/* A nave decola rápido encolhendo em direção ao espaço (sumindo da página) */
+.ship-escape-yoda {
+    top: -250px !important;
+    left: -150px !important; 
+    transform: scale(0) rotate(-20deg);
+    opacity: 0 !important;
+    transition: all 1.5s cubic-bezier(0.55, 0.055, 0.675, 0.19) !important;
+}
