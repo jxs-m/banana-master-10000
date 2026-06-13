@@ -146,8 +146,9 @@ function checkRunnerPhysics() {
         return;
     }
 
-    // Incrementa a pontuação
-    runnerScore += 0.4;
+    // ALTERAÇÃO AQUI: Mudando de 0.4 para 0.2 faz o progresso demorar 10s para chegar a 100%
+    runnerScore += 0.2; 
+    
     if (runnerScore <= 100) {
         scoreDisplay2.innerText = `Progresso da Perseguição: ${Math.floor(runnerScore)}%`;
     } else {
