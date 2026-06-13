@@ -329,7 +329,7 @@ function initGame(){
   document.getElementById('cutsceneOverlay').style.display = 'none';
 
   camY = WORLD_H - H;
-  player = {x:W/2, y:camY + H - 120, vx:0, vy:0, w:36, h:36, alive:true, trail:[]};
+  player = {x:W/2, y:camY + H - 80, vx:0, vy:0, w:36, h:36, alive:true, trail:[]};
   bullets = []; explosions = []; particles = []; meteors = [];
 
   naoBlock = {
@@ -345,7 +345,7 @@ function initGame(){
   planet.r = 20;       
   planet.targetR = 110; 
 
-  const enemyY = camY + H - 50;
+  const enemyY = camY + 150;
   
   enemies = [
     {x:W/2-60, y:enemyY, vx: 1.2, w:38, h:38, fireTimer: 400 + Math.random()*400, col:'#ff3333'},
@@ -387,10 +387,10 @@ function spawnExplosion(x,y,big){
 function fireEnemy(e){
   if(cutscene) return; 
   const angle = (Math.random() - 0.5) * 0.2;
-  const spd = -6.5; 
+  const spd = 6.5; 
   bullets.push({
     x: e.x, 
-    y: e.y - 15, 
+    y: e.y + 15, 
     vx: Math.sin(angle) * 1.0, 
     vy: spd, 
     w: 3,   
